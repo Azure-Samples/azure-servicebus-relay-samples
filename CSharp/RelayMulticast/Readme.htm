@@ -1,0 +1,294 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML dir=ltr XMLNS:MSHelp = "http://msdn.microsoft.com/mshelp" xmlns:ddue = 
+"http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink = 
+"http://www.w3.org/1999/xlink" xmlns:tool = "http://www.microsoft.com/tooltip" 
+XMLNS:[default] http://ddue.schemas.microsoft.com/authoring/2003/5 = 
+"http://ddue.schemas.microsoft.com/authoring/2003/5"><HEAD><TITLE>NetEvent Sample</TITLE>
+<META content="text/html; CHARSET=utf-8" http-equiv=Content-Type></META>
+<META name=save content=history></META><LINK rel=stylesheet type=text/css 
+href="../../../../CommonFiles/Classic.css"></LINK>
+
+<META name=GENERATOR content="MSHTML 8.00.6001.18783">
+<style type="text/css">
+.style1 {
+				font-family: monospace;
+				font-size: small;
+				color: #000000;
+}
+.style2 {
+				font-family: monospace;
+				font-size: 100%;
+				color: #000000;
+}
+</style>
+</HEAD>
+<BODY><INPUT id=userDataCache class=userDataStyle type=hidden></INPUT><INPUT 
+id=hiddenScrollOffset type=hidden></INPUT><IMG 
+style="WIDTH: 0px; DISPLAY: none; HEIGHT: 0px" id=dropDownImage 
+src="../../../../../Common/Html/drpdown.gif"></IMG><IMG 
+style="WIDTH: 0px; DISPLAY: none; HEIGHT: 0px" id=dropDownHoverImage 
+src="../../../../../Common/Html/drpdown_orange.gif"></IMG><IMG 
+style="WIDTH: 0px; DISPLAY: none; HEIGHT: 0px" id=copyImage 
+src="../../../../../Common/Html/copycode.gif"></IMG><IMG 
+style="WIDTH: 0px; DISPLAY: none; HEIGHT: 0px" id=copyHoverImage 
+src="../../../../../Common/Html/copycodeHighlight.gif"></IMG>
+<DIV id=header>
+<TABLE id=topTable width="100%">
+  <TBODY>
+  <TR id=headerTableRow1>
+    <TD align=left><SPAN id=runningHeaderText></SPAN></TD></TR>
+  <TR id=headerTableRow2>
+    <TD align=left><SPAN id=nsrTitle>NetEvent Sample</SPAN></TD></TR>
+  <TR id=headerTableRow3>
+    <TD></TD></TR></TBODY></TABLE>
+</DIV>
+<DIV id=mainSection>
+<DIV id=mainBody>
+<DIV id=allHistory class=saveHistory onload="loadAll()" 
+onsave="saveAll()"></DIV>
+<P>This sample demonstrates using the <B>NetEventRelayBinding</B> binding on the 
+Windows Azure Service Bus. This binding allows multiple applications to listen to events sent 
+to an endpoint; events sent to that endpoint are received by all 
+applications.</P>
+<P>The application accepts one of three mutually exclusive, optional command 
+line parameters that select the connectivity mode for the Service Bus 
+environment. </P>
+<UL>
+  <LI class=unordered><B>-auto</B> selects the AutoDetect mode. In this mode, 
+  the Service Bus client automatically switches between TCP and HTTP 
+  connectivity. <BR><BR>
+  <LI class=unordered><B>-tcp</B> selects the Tcp mode, in which all 
+  communication to the Service Bus is performed using outbound TCP 
+  connections.<BR><BR>
+  <LI class=unordered><B>-http</B> tells the application to use the Http mode, 
+  in which all communication to Service Bus is performed using outbound HTTP 
+  connections.<BR><BR></LI></UL>
+<H2 class=heading>Prerequisites</H2>
+<DIV id=sectionSection0 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<P xmlns="">If you haven't already done so, read the release notes document that 
+explains how to sign up for a Windows Azure account and how to configure your 
+environment. It also contains important information about the default security 
+settings for your environment that you need to be aware of.</P></content></DIV>
+<H2 class=heading>Service Contract &amp; Implementation</H2>
+<DIV id=sectionSection1 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<P xmlns="">This sample implements a chatroom via the project&#39;s<CODE> IMulticastContract</CODE> and <CODE>MulticastService</CODE> 
+implementations. <CODE>Hello</CODE> and <CODE>Bye</CODE> are used within the chatroom application to 
+notify participants when a user joins and leaves the chat. <CODE>Chat</CODE> is 
+called by the application when a user provides a string to contribute to the 
+conversation.</P>
+<P xmlns="">Note that the methods must be marked as 
+<CODE>IsOneWay=True</CODE>. </P>
+<DIV class=code xmlns=""><SPAN codeLanguage="CSharp">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TH>C#&nbsp;</TH>
+</TR>
+  <TR>
+    <TD colSpan=2><PRE>[ServiceContract(Name = "IMulticastContract", Namespace = "http://samples.microsoft.com/ServiceModel/Relay/")]
+public interface IMulticastContract
+{
+     [OperationContract(IsOneWay=true)]
+     void Hello(string nickName);
+ 
+     [OperationContract(IsOneWay = true)]
+     void Chat(string nickName, string text);
+ 
+     [OperationContract(IsOneWay = true)]
+     void Bye(string nickName);
+}
+</PRE></TD></TR></TBODY></TABLE></SPAN></DIV>
+<P xmlns="">The service implementation is shown below.</P>
+<DIV class=code xmlns=""><SPAN codeLanguage="CSharp">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TH>C#&nbsp;</TH>
+</TR>
+  <TR>
+    <TD colSpan=2><PRE>ServiceBehavior(Name = "MulticastService", Namespace = "http://samples.microsoft.com/ServiceModel/Relay/")]
+class MulticastService : IMulticastContract
+{
+    void IMulticastContract.Hello(string nickName)
+    {
+        Console.WriteLine("[" + nickName + "] joins");
+    }
+ 
+    void IMulticastContract.Chat(string nickName, string text)
+    {
+        Console.WriteLine("[" + nickName + "] says: " + text);
+    }
+ 
+    void IMulticastContract.Bye(string nickName)
+    {
+        Console.WriteLine("[" + nickName + "] leaves");
+    }   
+}
+</PRE></TD></TR></TBODY></TABLE></SPAN></DIV>
+</content></DIV>
+<H2 class=heading>Configuration</H2>
+<DIV id=sectionSection2 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<P xmlns="">The service and client endpoints use the <B>NetEventRelayBinding</B> 
+binding. </P>
+<DIV class=code xmlns=""><SPAN codeLanguage="xml">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TH>Xml&nbsp;</TH>
+</TR>
+  <TR>
+    <TD colSpan=2><PRE>&lt;netEventRelayBinding&gt;
+     &lt;binding name="default" /&gt;
+&lt;/netEventRelayBinding&gt; 
+</PRE></TD></TR></TBODY></TABLE></SPAN></DIV>
+<P xmlns="">The endpoints for the service and client are defined in the 
+application configuration file. The client address is a placeholder that is 
+replaced in the application. The following endpoints are defined:</P>
+<DIV class=code xmlns=""><SPAN codeLanguage="xml">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TH>Xml&nbsp;</TH>
+</TR>
+  <TR>
+    <TD colSpan=2><PRE>&lt;service name="Microsoft.ServiceBus.Samples.MulticastService"&gt;
+    &lt;endpoint name="RelayEndpoint"
+              contract="Microsoft.ServiceBus.Samples.IMulticastContract"
+              binding="netEventRelayBinding"
+              bindingConfiguration="default"
+              address="" /&gt;
+&lt;/service&gt;
+ 
+&lt;client&gt;
+    &lt;endpoint name="RelayEndpoint"
+              contract="Microsoft.ServiceBus.Samples.IMulticastContract"
+              binding="netTcpRelayBinding"
+              bindingConfiguration="default"
+              address="http://AddressToBeReplacedInCode/" /&gt;
+&lt;/client&gt;</PRE></TD></TR></TBODY></TABLE></SPAN></DIV></content></DIV>
+<H2 class=heading>Application</H2>
+<DIV id=sectionSection3 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<P xmlns="">The application begins by obtaining the chat session name, the service 
+namespace, the 
+issuer credentials and a chat nickname (a string used to identify the 
+chatter). The sample constructs the service URI using this information, then 
+opens the service and the client channel to the Service Bus rendezvous endpoint 
+for the chat session. The <CODE>Hello</CODE> method notifies all participating 
+applications of the arrival of a new user. The <CODE>Chat</CODE> method sends all strings as messages to 
+all participating applications until an empty string is provided as input. 
+    At that point the client leaves the chatroom and the <CODE>Bye</CODE> method notifies all participants of the client&#39;s departure.</P>
+<DIV class=code xmlns=""><SPAN codeLanguage="CSharp">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TH>C#&nbsp;</TH>
+</TR>
+  <TR>
+    <TD colSpan=2><PRE class="style2">Console.Write(&quot;What do you want to call your chat session? &quot;);
+string session = Console.ReadLine();
+Console.Write(&quot;Your Service Namespace: &quot;);
+string serviceNamespace = Console.ReadLine();
+Console.Write(&quot;Your Issuer Name: &quot;);
+string issuerName = Console.ReadLine();
+Console.Write(&quot;Your Issuer Secret: &quot;);
+string issuerSecret = Console.ReadLine();
+Console.Write(&quot;Your Chat Nickname: &quot;);
+string chatNickname = Console.ReadLine();</PRE>
+	<PRE>TransportClientEndpointBehavior relayCredentials = new TransportClientEndpointBehavior();
+relayCredentials.TokenProvider = TokenProvider.CreateSharedSecretTokenProvider(issuerName, issuerSecret);    
+
+Uri serviceAddress = ServiceBusEnvironment.CreateServiceUri(&quot;sb&quot;, &quot;ChatRooms&quot;,
+String.Format(CultureInfo.InvariantCulture, &quot;{0}/MulticastService/&quot;, session));
+ServiceHost host = new ServiceHost(typeof(MulticastService), serviceAddress);
+host.Description.Endpoints[0].Behaviors.Add(relayCredentials);
+host.Open();
+
+ChannelFactory&lt;IMulticastChannel&gt; channelFactory = new ChannelFactory&lt;IMulticastChannel&gt;(&quot;RelayEndpoint&quot;, new EndpointAddress(serviceAddress));
+channelFactory.Endpoint.Behaviors.Add(relayCredentials);
+IMulticastChannel channel = channelFactory.CreateChannel();
+channel.Open();
+
+Console.WriteLine(&quot;\nPress [Enter] to exit\n&quot;);
+
+channel.Hello(chatNickname);
+
+string input = Console.ReadLine();
+while (input != String.Empty)
+{
+   channel.Chat(chatNickname, input);
+   input = Console.ReadLine();
+}
+
+channel.Bye(chatNickname);
+
+channel.Close();
+channelFactory.Close();
+host.Close();
+</PRE></TD></TR></TBODY></TABLE></SPAN></DIV>
+				</content></DIV>
+<H2 class=heading>Building and Running the Sample</H2>
+<DIV id=sectionSection4 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<P xmlns="">After building the solution, perform the following steps to run the 
+application:</P>
+<OL class=ordered xmlns="">
+  <LI>From a command prompt, run the application 
+  bin\Debug\MulticastSample.exe.<BR><BR>
+  <LI>From another command prompt, run another instance of the application 
+  bin\Debug\MulticastSample.exe.<BR><BR></LI></OL>
+<P xmlns="">When finished, press ENTER to exit the application.</P>
+<P xmlns=""><B>Expected Output – Application 1</B></P>
+<DIV class=code xmlns=""><SPAN codeLanguage="other">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TD colSpan=2><PRE class="style1">What do you want to call your chat session? &lt;chat-session&gt;
+Your Service Namespace: &lt;service-namespace&gt;
+Your Issuer Name: owner
+Your Issuer Secret: &lt;issuer-secret&gt;
+Your Chat Nickname: &lt;chat-nickname&gt;
+
+Press [Enter] to exit
+
+[jill] joins
+hello
+[jill] says: hello
+[jack] says: hi, how are you?
+[jack] says: who do you think will win the superbowl this year?
+</PRE></TD></TR></TBODY></TABLE></SPAN></DIV>
+<P xmlns=""><B>Expected Output – Application 2</B></P>
+<DIV class=code xmlns=""><SPAN codeLanguage="other">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TD colSpan=2><PRE class="style1">What do you want to call your chat session? &lt;chat-session&gt;
+Your Service Namespace: &lt;service-namespace&gt;
+Your Issuer Name: owner
+Your Issuer Secret: &lt;issuer-secret&gt;
+Your Chat Nickname: &lt;chat-nickname&gt;
+
+Press [Enter] to exit
+
+[jack] joins
+[jill] joins
+[jill] says: hello
+hi, how are you?
+[jack] says: hi, how are you?
+who do you think will win the superbowl this year?
+[jack] says: who do you think will win the superbowl this year?</PRE></TD></TR></TBODY></TABLE></SPAN></DIV></content></DIV><!--[if gte IE 5]><tool:tip 
+avoidmouse="false" element="languageFilterToolTip"></tool:tip><![endif]--></DIV>
+<P>
+    <br /> 
+    <hr /> 
+    Did you find this information useful?
+    <a href="http://go.microsoft.com/fwlink/?LinkID=155664">
+      
+      <linkText>
+        Please send your suggestions and comments about the documentation.
+      </linkText>
+    </a>
+</DIV></BODY></HTML>

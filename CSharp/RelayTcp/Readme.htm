@@ -1,0 +1,170 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML dir=ltr XMLNS:MSHelp = "http://msdn.microsoft.com/mshelp" xmlns:ddue = 
+"http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink = 
+"http://www.w3.org/1999/xlink" xmlns:tool = "http://www.microsoft.com/tooltip" 
+XMLNS:[default] http://ddue.schemas.microsoft.com/authoring/2003/5 = 
+"http://ddue.schemas.microsoft.com/authoring/2003/5"><HEAD><TITLE>Relayed Sample</TITLE>
+<META content="text/html; CHARSET=utf-8" http-equiv=Content-Type></META>
+<META name=save content=history></META><LINK rel=stylesheet type=text/css 
+href="../../../../../CommonFiles/Classic.css"></LINK>
+
+<META name=GENERATOR content="MSHTML 8.00.6001.18783">
+<style type="text/css">
+.style1 {
+				font-family: monospace;
+				font-size: 100%;
+				color: #000000;
+}
+</style>
+</HEAD>
+<BODY><INPUT id=userDataCache class=userDataStyle type=hidden></INPUT><INPUT 
+id=hiddenScrollOffset type=hidden></INPUT><IMG 
+style="WIDTH: 0px; DISPLAY: none; HEIGHT: 0px" id=dropDownImage 
+src="../../../../../../Common/Html/drpdown.gif"></IMG><IMG 
+style="WIDTH: 0px; DISPLAY: none; HEIGHT: 0px" id=dropDownHoverImage 
+src="../../../../../../Common/Html/drpdown_orange.gif"></IMG><IMG 
+style="WIDTH: 0px; DISPLAY: none; HEIGHT: 0px" id=copyImage 
+src="../../../../../../Common/Html/copycode.gif"></IMG><IMG 
+style="WIDTH: 0px; DISPLAY: none; HEIGHT: 0px" id=copyHoverImage 
+src="../../../../../../Common/Html/copycodeHighlight.gif"></IMG>
+<DIV id=header>
+<TABLE id=topTable width="100%">
+  <TBODY>
+  <TR id=headerTableRow1>
+    <TD align=left><SPAN id=runningHeaderText></SPAN></TD></TR>
+  <TR id=headerTableRow2>
+    <TD align=left><SPAN id=nsrTitle>Relayed Sample</SPAN></TD></TR>
+  <TR id=headerTableRow3>
+    <TD></TD></TR></TBODY></TABLE>
+</DIV>
+<DIV id=mainSection>
+<DIV id=mainBody>
+<DIV id=allHistory class=saveHistory onload="loadAll()" 
+onsave="saveAll()"></DIV>
+<P>This sample demonstrates using the <B>NetTcpRelayBinding</B> binding.</P>
+<H2 class=heading>Prerequisites</H2>
+<DIV id=sectionSection0 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<P xmlns="">If you haven't already done so, read the release notes document that 
+explains how to sign up for a Windows Azure account and how to 
+configure your environment.</P></content></DIV>
+<H2 class=heading>Service</H2>
+<DIV id=sectionSection1 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<P xmlns="">The service project defines a simple contract, 
+(<CODE>IPingContract</CODE>):</P>
+<DIV class=code xmlns=""><SPAN codeLanguage="CSharp">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TH>C#&nbsp;</TH>
+</TR>
+  <TR>
+    <TD colSpan=2><PRE>[ServiceContract(SessionMode = SessionMode.Required, Name = "IPingContract", Namespace = "http://samples.microsoft.com/ServiceModel/Relay/")]
+public interface IPingContract
+{
+    [OperationContract(IsInitiating = true, IsTerminating = false)]
+    void Open();
+ 
+    [OperationContract(IsInitiating = false, IsOneWay = true, IsTerminating = false)]
+    void Ping(int count);
+ 
+    [OperationContract(IsInitiating = false, IsTerminating = true)]
+    void Close();
+}</PRE></TD></TR></TBODY></TABLE></SPAN></DIV>
+<P xmlns="">The <CODE>Open</CODE> operation is used to initiate an interaction. 
+<CODE>Ping</CODE> is a one-way operation that can be called an arbitrary number 
+of times. The <CODE>Close</CODE> operation terminates the sequence. </P>
+<P xmlns="">The service implements this contract in the <CODE>PingService</CODE> 
+class. The endpoints for this service are defined in the application 
+configuration file. Specifically, the following endpoint is defined:</P>
+<DIV class=code xmlns=""><SPAN codeLanguage="xml">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TH>Xml&nbsp;</TH>
+</TR>
+  <TR>
+    <TD colSpan=2><PRE>&lt;service name="Microsoft.ServiceBus.Samples.PingService"&gt;
+  &lt;endpoint name="RelayEndpoint"
+            contract="Microsoft.ServiceBus.Samples.IPingContract"
+            binding="netTcpRelayBinding" /&gt;
+&lt;/service&gt;</PRE></TD></TR></TBODY></TABLE></SPAN></DIV>
+<P xmlns="">&nbsp;</P>
+				</content></DIV>
+<H2 class=heading>Client</H2>
+<DIV id=sectionSection2 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<P xmlns="">The client is configured (also in the application configuration 
+file) with the following endpoint:</P>
+<DIV class=code xmlns=""><SPAN codeLanguage="xml">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TH>Xml&nbsp;</TH>
+</TR>
+  <TR>
+    <TD colSpan=2><PRE>&lt;client&gt;
+  &lt;endpoint name="RelayEndpoint"
+            contract="Microsoft.ServiceBus.Samples.IPingContract"
+            binding="netTcpRelayBinding" /&gt;
+&lt;/client&gt;</PRE></TD></TR></TBODY></TABLE></SPAN></DIV>
+<P xmlns="">In the code, an endpoint is opened.</P>
+<DIV class=code xmlns=""><SPAN codeLanguage="CSharp">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TH>C#&nbsp;</TH>
+</TR>
+  <TR>
+    <TD colSpan=2><PRE class="style1"><SPAN codeLanguage="CSharp">Console.Write(&quot;Your Service Namespace: &quot;);
+string serviceNamespace = Console.ReadLine();
+Console.Write(&quot;Your Issuer Name: &quot;);
+string issuerName = Console.ReadLine();
+Console.Write(&quot;Your Issuer Secret: &quot;);
+string issuerSecret = Console.ReadLine();</SPAN>
+
+Uri serviceUri = ServiceBusEnvironment.CreateServiceUri(&quot;sb&quot;, serviceNamespace, &quot;PingService&quot;);
+
+TransportClientEndpointBehavior sharedSecretServiceBusCredential = new TransportClientEndpointBehavior();
+sharedSecretServiceBusCredential.TokenProvider = TokenProvider.CreateSharedSecretTokenProvider(issuerName, issuerSecret);
+
+ChannelFactory&lt;IPingContract&gt; channelFactory = new ChannelFactory&lt;IPingContract&gt;(&quot;RelayEndpoint&quot;, new EndpointAddress(serviceUri));
+
+channelFactory.Endpoint.Behaviors.Add(sharedSecretServiceBusCredential);
+
+IPingContract channel = channelFactory.CreateChannel();
+Console.WriteLine(&quot;Opening Channel.&quot;);
+channel.Open();</PRE></TD></TR></TBODY></TABLE></SPAN></DIV>
+<P xmlns="">After the <CODE>ChannelFactory</CODE> is created, the client 
+application creates a channel to the service and interacts with it.</P>
+<P xmlns="">After the interaction is complete, the client closes both the 
+channel and the <CODE>ChannelFactory</CODE>, and then exits.</P></content></DIV>
+<H2 class=heading>Building and Running the Sample</H2>
+<DIV id=sectionSection3 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<P xmlns="">After building the solution, do the following to run the 
+application:</P>
+<OL class=ordered xmlns="">
+  <LI>From a command prompt, run the service 
+  (Service\bin\Debug\Service.exe). You will be prompted for your service namespace, your issuer name and
+	secret.<BR><BR>
+  <LI>From another command prompt, run the client 
+  (Client\bin\Debug\Client.exe). You will be prompted for your service namespace, your issuer name and
+	secret.<BR>
+	<BR>
+	<LI>When finished, press ENTER to exit the client and the 
+service.<BR>
+	<BR>
+	</LI>
+				</OL>
+				</content>
+</DIV>
+</DIV>
+    <hr /> 
+    Did you find this information useful?
+    <a href="http://go.microsoft.com/fwlink/?LinkID=155664">
+        Please send your suggestions and comments about the documentation.
+
+    </a></P>
+</DIV></BODY></HTML>

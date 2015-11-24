@@ -1,0 +1,201 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML dir=ltr XMLNS:MSHelp = "http://msdn.microsoft.com/mshelp" xmlns:ddue = 
+"http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink = 
+"http://www.w3.org/1999/xlink" xmlns:tool = "http://www.microsoft.com/tooltip" 
+XMLNS:[default] http://ddue.schemas.microsoft.com/authoring/2003/5 = 
+"http://ddue.schemas.microsoft.com/authoring/2003/5"><HEAD><TITLE>Load Balance Sample</TITLE>
+<META content="text/html; CHARSET=utf-8" http-equiv=Content-Type></META>
+<META name=save content=history></META>
+<LINK rel=stylesheet type=text/css 
+href="../../../CommonFiles/Classic.css"></LINK>
+
+<META name=GENERATOR content="MSHTML 8.00.6001.18783">
+<style type="text/css">
+.style1 {
+				font-family: monospace;
+				font-size: 100%;
+				color: #000000;
+}
+.style2 {
+				font-family: monospace;
+				font-size: small;
+				color: #000000;
+}
+.style3 {
+	font-weight: 600;
+	font-size: 125%;
+	color: #003399;
+}
+</style>
+</HEAD>
+<BODY>
+<DIV id=header>
+<TABLE id=topTable width="100%">
+  <TBODY>
+  <TR id=headerTableRow1>
+    <TD align=left><SPAN id=runningHeaderText></SPAN></TD></TR>
+  <TR id=headerTableRow2>
+    <TD align=left><span class="style3">Load Balance</span><SPAN id=nsrTitle> Sample</SPAN></TD></TR>
+  <TR id=headerTableRow3>
+    <TD></TD></TR></TBODY></TABLE>
+</DIV>
+<DIV id=mainSection>
+<DIV id=mainBody>
+<DIV id=allHistory class=saveHistory onload="loadAll()" 
+onsave="saveAll()"></DIV>
+<P>This sample demonstrates how to use the Windows Azure Service Bus 
+to route messages to multiple receivers.<span style="mso-spacerun: yes">&nbsp;
+</span>It shows multiple instances of a simple service communicating with a 
+client via the <span class="SpellE"><strong>NetTcpRelayBinding</strong> binding</span>. When 
+each instance of the service application is started, it prompts for your 
+credentials and opens a unique endpoint on the Service Bus. Once 
+opened, this endpoint has a well-known URI on the Service Bus and is 
+reachable from anywhere, even if your computer resides behind 
+a firewall or Network Address Translation (NAT). </P>
+<P>Clients accessing an endpoint must have permission to communicate with that endpoint. 
+Therefore, the client application also prompts for your credentials, authenticates 
+with the Service Bus Access Control (AC) service, and acquires an access token that proves to the 
+Service Bus infrastructure that the client is authorized to access the endpoint. 
+Once the client is connected, you can type messages into the client application 
+which will be echoed back by any one of the running instances of the service. </P>
+<H2 class=heading>Prerequisites</H2>
+<DIV id=sectionSection0 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<P xmlns="">If you haven't already done so, please read the release notes 
+document that explains how to sign up for a Windows Azure 
+account and how to configure your environment.</P>
+				</content></DIV>
+<H2 class=heading>LoadBalance Service</H2>
+<DIV id=sectionSection1 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<P xmlns="">The service is similar to the Echo Sample and implements a simple 
+contract with a single operation named <b>Echo</b>. Every running instance of the 
+service accepts a string and echoes the string back. </P>
+<DIV class=code xmlns=""><SPAN codeLanguage="CSharp">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TH>C#&nbsp;</TH>
+</TR>
+  <TR>
+    <TD colSpan=2><PRE><SPAN codeLanguage="CSharp"> </SPAN>[ServiceBehavior(Name = &quot;EchoService&quot;, Namespace = &quot;http://samples.microsoft.com/ServiceModel/Relay/&quot;)]
+class EchoService : IEchoContract
+{
+   public string Echo(string text)
+   {
+      Console.WriteLine(&quot;Echoing: {0}&quot;, text);
+      return text; 
+   }
+}</PRE></TD></TR></TBODY></TABLE></SPAN></DIV>
+	</content>
+</DIV>
+<H2 class=heading>LoadBalance Client</H2>
+<DIV id=sectionSection2 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<DIV class=code xmlns=""><SPAN codeLanguage="xml">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  </TBODY></TABLE></SPAN></DIV>
+<P xmlns="">When started, the client asks for the service namespace, creates 
+a channel to the logical address of the router, and sends requests. Instead of the simple
+<b>ChannelFactory</b> used in the Echo sample, the LoadBalance sample uses a <b>BalancingChannelFactory</b>, which 
+facilitates load balancing across the listener instances to which the router 
+routes the client messages. Once the interaction is complete, the client 
+closes the channel and exits.</P>
+<DIV class=code xmlns=""><SPAN codeLanguage="CSharp">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TH>C#&nbsp;</TH>
+</TR>
+  <TR>
+    <TD colSpan=2><PRE class="style1">Console.Write("Your Service Namespace: ");
+string serviceNamespace = Console.ReadLine();
+Console.Write(&quot;Your Issuer Name: &quot;);
+string issuerName = Console.ReadLine();
+Console.Write(&quot;Your Issuer Secret: &quot;);
+string issuerSecret = Console.ReadLine();
+
+// create the service URI based on the service namespace
+Uri serviceUri = ServiceBusEnvironment.CreateServiceUri(&quot;sb&quot;, issuerName, &quot;EchoService&quot;);
+
+// create the credentials object for the endpoint
+TransportClientEndpointBehavior sharedSecretServiceBusCredential = new TransportClientEndpointBehavior();
+sharedSecretServiceBusCredential.TokenProvider = TokenProvider.CreateSharedSecretTokenProvider(issuerName, issuerSecret);
+
+// create the channel factory loading the configuration
+BalancingChannelFactory&lt;IEchoChannel&gt; channelFactory = 
+    new BalancingChannelFactory&lt;IEchoChannel&gt;(
+    new NetTcpRelayBinding(EndToEndSecurityMode.None, RelayClientAuthenticationType.RelayAccessToken), 
+    new EndpointAddress(serviceUri));
+
+// apply the Service Bus credentials
+channelFactory.Endpoint.Behaviors.Add(sharedSecretServiceBusCredential);
+
+Console.WriteLine(&quot;Enter text to echo (or [Enter] to exit):&quot;);
+
+string input = Console.ReadLine();
+
+while (input != String.Empty)
+{
+IEchoChannel channel = channelFactory.CreateChannel();
+channel.Open();
+
+try
+{
+// create and open the client channel
+Console.WriteLine(&quot;Server echoed: {0}&quot;, channel.Echo(input));
+channel.Close();
+}
+catch (Exception e)
+{
+Console.WriteLine(&quot;Error: &quot; + e.Message);
+channel.Abort();
+}
+
+input = Console.ReadLine();
+}
+
+channelFactory.Close();</PRE></TD></TR></TBODY></TABLE></SPAN></DIV>
+    </content></DIV>
+<H2 class=heading>Running the Sample</H2>
+<DIV id=sectionSection4 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<P xmlns="">To run the sample, build the solution in Visual Studio or from the 
+command line. Run several instances of the service application first, then run 
+one instance of the client.</P>
+<P xmlns="">When the service and the client are running, you can 
+start typing messages into the client application. These messages are received by the service
+application and echoed to each instance in a round-robin fashion.</P>
+<P xmlns=""><B>Expected Output - Service</B></P>
+<DIV class=code xmlns=""><SPAN codeLanguage="other">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TD colSpan=2><PRE class="style2">Your Service Namespace: &lt;service-namespace&gt;
+Your Issuer Name: &lt;issuer-name&gt;
+Your Issuer Secret: &lt;issuer-secret&gt;
+Service address: sb://&lt;service-namespace&gt;.servicebus.windows.net/EchoService/
+Listen address: sb://&lt;service-namespace&gt;.servicebus.windows.net/EchoService/<guid>
+Press [Enter] to exit
+Echoing: Hello, World!
+</PRE>
+	</TD></TR></TBODY></TABLE></SPAN></DIV>
+<P xmlns=""><B>Expected Output - Client</B></P>
+<DIV class=code xmlns=""><SPAN codeLanguage="other">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TD colSpan=2><PRE><SPAN codeLanguage="other">Your Service Namespace: &lt;service-namespace&gt;
+Your Issuer Name: &lt;issuer-name&gt;
+Your Issuer Secret: &lt;issuer-secret&gt;
+Enter text to echo (or [Enter] to exit): Hello, World!
+Server echoed: Hello, World!</SPAN></PRE></TD></TR></TBODY></TABLE></SPAN></DIV></content></DIV><!--[if gte IE 5]><tool:tip 
+avoidmouse="false" element="languageFilterToolTip"></tool:tip><![endif]--></DIV>
+<P xmlns="">
+    <hr /> 
+    Did you find this information useful?
+    <a href="http://go.microsoft.com/fwlink/?LinkID=155664">
+        Please send your suggestions and comments about the documentation.
+
+    </a></P></DIV></BODY></HTML>

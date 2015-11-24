@@ -1,0 +1,98 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML dir=ltr XMLNS:MSHelp = "http://msdn.microsoft.com/mshelp" xmlns:ddue = 
+"http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink = 
+"http://www.w3.org/1999/xlink" xmlns:tool = "http://www.microsoft.com/tooltip" 
+XMLNS:[default] http://ddue.schemas.microsoft.com/authoring/2003/5 = 
+"http://ddue.schemas.microsoft.com/authoring/2003/5"><HEAD><TITLE>Cloud Trace Scenario</TITLE>
+<META content="text/html; CHARSET=utf-8" http-equiv=Content-Type></META>
+<META name=save content=history></META><LINK rel=stylesheet type=text/css 
+href="../../../CommonFiles/Classic.css"></LINK>
+
+<META name=GENERATOR content="MSHTML 8.00.6001.18783"></HEAD>
+<BODY>
+<DIV id=header>
+<TABLE id=topTable width="100%">
+  <TBODY>
+  <TR id=headerTableRow1>
+    <TD align=left><SPAN id=runningHeaderText></SPAN></TD></TR>
+  <TR id=headerTableRow2>
+    <TD align=left><SPAN id=nsrTitle>Cloud Trace Scenario</SPAN></TD></TR>
+  <TR id=headerTableRow3>
+    <TD></TD></TR></TBODY></TABLE>
+</DIV>
+<DIV id=mainSection>
+<DIV id=mainBody>
+<DIV id=allHistory class=saveHistory onload="loadAll()" 
+onsave="saveAll()"></DIV>
+<P>This sample demonstrates a System.Diagnostics.TraceListener which sends tracing 
+    information over the Windows Azure Service Bus to a remote receiver. </P>
+
+    <H2 class=heading>Prerequisites</H2>
+<DIV id=sectionSection3 class=section>
+<P xmlns="">If you haven't already done so, please read the release notes 
+document that explains how to sign up for a Windows Azure 
+account and how to configure your environment.</P>
+    </DIV>
+	<H2 class=heading>Running the Sample</H2>
+<DIV id=DIV1 class=section>
+<P xmlns="">First configure the application configuration (App.config) files of both the TraceConsole and TraceTest 
+applications (see below). Start the TraceConsole application, then start the 
+TraceTest application. The TraceTest application sends tracing 
+information (via the Service Bus). The TraceConsole 
+application receives this information and outputs it to the console. As an additional test, you can
+run the TraceConsole and TraceTest applications on different computers, or even on different networks.</P>
+    </DIV>
+    <H2 class=heading>TraceListener</H2>
+<DIV id=sectionSection0 class=section>
+<P xmlns="">In the <b>TraceListener</b> project a <code>System.Diagnostics.TraceListener</code> is 
+    defined. This listener sends tracing information over the Service Bus using the 
+    <code>NetEventRelayBinding</code>.</P>
+    </DIV>
+<H2 class=heading>TraceConsole</H2>
+<DIV id=sectionSection1 class=section>
+<P xmlns="">The <strong>TraceConsole</strong> listens on a 
+    <code>NetEventRelayBinding</code> URI and prints the trace information it 
+receives to the console.</P>
+	<P xmlns="">You must configure the TraceConsole App.config file with your 
+	account information. The following example demonstrates this configuration:</P>
+	<code>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;<br>&lt;configuration&gt;<br>
+	&nbsp;&nbsp;&nbsp;
+	&lt;appSettings&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;add key=&quot;CloudTraceServicePath&quot; value=&quot;samples/traces&quot;/&gt;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	&lt;add key=&quot;CloudTraceServiceNamespace&quot; value=&quot;myexample&quot;/&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;add 
+	key=&quot;CloudTraceIssuerName&quot; value=&quot;myexample&quot;/&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;add 
+	key=&quot;CloudTraceIssuerSecret&quot; 
+	value=&quot;aflqn+lr64pVtENA/UayGC49+ImzwY5EmJHeAQJSnSY=&quot;/&gt;<br>&nbsp;&nbsp;&nbsp; &lt;/appSettings&gt;<br>
+	&lt;/configuration&gt;</code>
+    </content>
+    </DIV>
+<H2 class=heading>TraceTest</H2>
+<DIV id=sectionSection2 class=section>
+<P xmlns="">The <strong>TraceTest</strong> project adds the CloudTrace listener to its list of active 
+trace listeners and generates sample tracing data.</P>
+	<P xmlns="">You must add your account information to the TraceTest App.config file. 
+	You can refer to the TraceListener configuration file. 
+	The following example demonstrates this configuration:</P>
+	<code>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;<br>&lt;configuration&gt;<br>&nbsp;&nbsp;&nbsp; &lt;appSettings&gt;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	&lt;add key=&quot;CloudTraceServicePath&quot; value=&quot;samples/traces&quot;/&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;add 
+	key=&quot;CloudTraceServiceNamespace&quot; value=&quot;myexample&quot;/&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;add 
+	key=&quot;CloudTraceIssuerName&quot; value=&quot;myexample&quot;/&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;add 
+	key=&quot;CloudTraceIssuerSecret&quot; 
+	value=&quot;aflqn+lr64pVtENA/UayGC49+ImzwY5EmJHeAQJSnSY=&quot;/&gt;<br>&lt;/appSettings&gt;<br>
+	<br>&lt;system.diagnostics&gt;<br>&nbsp;&nbsp;&nbsp; &lt;trace&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;listeners&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;add name=&quot;CloudTrace&quot; 
+	type=&quot;Microsoft.ServiceBus.Samples.CloudTraceListener,Microsoft.ServiceBus.Samples.CloudTraceListener&quot;&gt;&lt;/add&gt;<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	&lt;/listeners&gt;<br>&nbsp;&nbsp;&nbsp; &lt;/trace&gt;<br>&lt;/system.diagnostics&gt;<br>
+	<br>&lt;/configuration&gt;</code></content></DIV>
+    </content>
+    </content>
+    <p>
+        &nbsp;</p>
+    <hr /> 
+    Did you find this information useful?
+    <a href="http://go.microsoft.com/fwlink/?LinkID=155664">
+        Please send your suggestions and comments about the documentation.
+
+    </a></P>
+</DIV></BODY></HTML>

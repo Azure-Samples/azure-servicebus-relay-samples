@@ -1,0 +1,112 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML dir=ltr XMLNS:MSHelp = "http://msdn.microsoft.com/mshelp" xmlns:ddue = 
+"http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink = 
+"http://www.w3.org/1999/xlink" xmlns:tool = "http://www.microsoft.com/tooltip" 
+XMLNS:[default] http://ddue.schemas.microsoft.com/authoring/2003/5 = 
+"http://ddue.schemas.microsoft.com/authoring/2003/5"><HEAD><TITLE>SharedSecret Sample</TITLE>
+<META content="text/html; CHARSET=utf-8" http-equiv=Content-Type></META>
+<META name=save content=history></META><LINK rel=stylesheet type=text/css 
+href="../../../../CommonFiles/Classic.css"></LINK>
+
+<META name=GENERATOR content="MSHTML 8.00.6001.18702"></HEAD>
+<BODY>
+<DIV id=header>
+<TABLE id=topTable width="100%">
+  <TBODY>
+  <TR id=headerTableRow1>
+    <TD align=left><SPAN id=runningHeaderText></SPAN></TD></TR>
+  <TR id=headerTableRow2>
+    <TD align=left><SPAN id=nsrTitle>SharedSecret Sample</SPAN></TD></TR>
+  <TR id=headerTableRow3>
+    <TD></TD></TR></TBODY></TABLE>
+</DIV>
+<DIV id=mainSection>
+<DIV id=mainBody>
+<DIV id=allHistory class=saveHistory onload="loadAll()" 
+onsave="saveAll()"></DIV>
+<P>This sample demonstrates how to use an issuer name and issuer secret to 
+authenticate with the Service Bus. </P>
+<P>The sample is similar to the Echo sample, with a few changes. Specifically, 
+this sample adds a behavior in the <CODE>ServiceHost</CODE> 
+(service side) and <CODE>ChannelFactory</CODE> (client side).</P>
+<H2 class=heading>Prerequisites</H2>
+<DIV id=sectionSection0 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<P xmlns="">If you haven't already done so, please read the release notes 
+document that explains how to sign up for a Windows Azure account and 
+how to configure your environment.</P></content></DIV>
+<H2 class=heading>Service</H2>
+<DIV id=sectionSection1 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<P xmlns="">Please refer to the Echo sample for information about how the 
+service is defined and configured.</P></content></DIV>
+<H2 class=heading>Client</H2>
+<DIV id=sectionSection2 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<P xmlns="">Please refer to the Echo sample for information about how the client 
+is defined and configured.</P>
+    <p xmlns="">
+        In this sample, both the client and the service use the same credential; therefore, no additional 
+        steps are required to grant the client access to listen or send a message to the service 
+        through the Service Bus. By default, a credential is granted with <b>Listen</b>, 
+        <b>Send</b>, and <b>Manage</b> privileges within its own Service Bus service namespace.&nbsp; 
+        If the client is using a different credential than the service, a specific Access 
+        Control rule is needed for a client credential to gain <b>Listen, Send or Manage</b> 
+        privileges in the Service Bus service namespace for the service. For more information 
+        about creating Access Control rules, please see the <b>
+        ManagementService</b> sample from the  <a href="http://acs.codeplex.com/releases/view/57595">Access Control Samples</a> .</p>
+    </content>
+    </DIV>
+<H2 class=heading>Building and Running the Sample</H2>
+<DIV id=sectionSection3 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<P xmlns="">First, build the solution in Visual Studio or from the command line. 
+To run the application, do the following:</P>
+<OL class=ordered xmlns="">
+  <LI>From a command prompt, run the service 
+  (Service\bin\Debug\Service.exe).<BR><BR>
+  <LI>When prompted, enter the Service Namespace, the issuer name 
+      (e.g. &quot;owner&quot;) and secret. When 
+  authorized, the service indicates that it is listening at the configured 
+  address.<BR><BR>
+  <LI>From another command prompt, run the client 
+  (Client\bin\Debug\Client.exe).<BR><BR>
+  <LI>When prompted, type your issuer name (e.g. &quot;owner&quot;), and the secret and the service namespace to which 
+  you want to connect. Enter a line of text to send to the service, then press <B>Enter</B>.<BR><BR>
+  <LI>When finished, press <B>Enter</B> to exit the client and the 
+  service.<BR><BR></LI></OL>
+<P xmlns=""><B>Expected Output – Client</B></P>
+<DIV class=code xmlns=""><SPAN codeLanguage="other">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TD colSpan=2><PRE><SPAN codeLanguage="other">Enter the name of the Service Namespace you want to connect to: &lt;service-namespace&gt;
+</SPAN>Your Issuer Name: owner
+Your Issuer Secret: &lt;issuer-secret&gt;
+Enter text to echo (or [Enter] to exit):
+a
+Server echoed: a
+b
+Server echoed: b
+c
+Server echoed: c</PRE></TD></TR></TBODY></TABLE></SPAN></DIV>
+<P xmlns=""><B>Expected Output – Service</B></P>
+<DIV class=code xmlns=""><SPAN codeLanguage="other">
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TD colSpan=2><PRE>Your Service Namespace: &lt;service-namespace&gt;
+Your Issuer Name: owner
+Your Issuer Secret: &lt;Issuer Secret&gt;
+Service address: sb://&lt;service-namespace&gt;.servicebus.windows.net/SharedSecretAuthenticationService/[Enter] to exit
+Echoing: a
+Echoing: b
+Echoing: c</PRE></TD></TR></TBODY></TABLE></SPAN></DIV></content></DIV><!--[if gte IE 5]><tool:tip 
+avoidmouse="false" element="languageFilterToolTip"></tool:tip><![endif]--></DIV>
+<P xmlns="">
+    <hr /> 
+    Did you find this information useful?
+    <a href="http://go.microsoft.com/fwlink/?LinkID=155664">
+        Please send your suggestions and comments about the documentation.
+
+    </a></P></DIV></BODY></HTML>
