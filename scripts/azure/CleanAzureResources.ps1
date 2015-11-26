@@ -1,7 +1,9 @@
 [CmdletBinding(PositionalBinding=$True)]
 Param(
     [parameter(Mandatory=$true)]
-    [string]$ExampleDir
+    [string] $ExampleDir,
+    [parameter(Mandatory=$true)]
+    [string] $configFile
     )
 
 ###########################################################
@@ -38,34 +40,22 @@ $startTime = Get-Date
 
 Write-SpecialLog "Deleting Azure resources for example: $ExampleDir" (Get-ScriptName) (Get-ScriptLineNumber)
 
-$configFile = Join-Path $ExampleDir "run\configurations.properties"
 $config = & "$scriptDir\..\config\ReadConfig.ps1" $configFile
 
 $config.Keys | sort | % { if(-not ($_.Contains("PASSWORD") -or $_.Contains("KEY"))) { Write-SpecialLog ("Key = " + $_ + ", Value = " + $config[$_]) (Get-ScriptName) (Get-ScriptLineNumber) } }
 
 $subName = $config["AZURE_SUBSCRIPTION_NAME"]
-Switch-AzureMode -Name AzureServiceManagement
 Write-SpecialLog "Using subscription '$subName'" (Get-ScriptName) (Get-ScriptLineNumber)
 Select-AzureSubscription -SubscriptionName $subName
 
 #Changing Error Action to Continue here onwards to have maximum resource deletion
 $ErrorActionPreference = "Continue"
 
-$servicebus = $false
-if($config["SERVICEBUS"].Equals("true", [System.StringComparison]::OrdinalIgnoreCase))
-{
-    $servicebus = $true
-}
-
 $success = $true
 
-
-if($servicebus)
-{
-    Write-InfoLog "Deleting ServiceBus" (Get-ScriptName) (Get-ScriptLineNumber)
-    & "$scriptDir\ServiceBus\DeleteServiceBus.ps1" $config["SERVICEBUS_NAMESPACE"] $config["SERVICEBUS_ENTITY_PATH"]
-    $success = $success -and $?
-}
+Write-InfoLog "Deleting ServiceBus" (Get-ScriptName) (Get-ScriptLineNumber)
+& "$scriptDir\ServiceBus\DeleteServiceBusRelay.ps1" $config["SERVICEBUS_NAMESPACE"] $config["SERVICEBUS_ENTITY_PATH"]
+$success = $success -and $?
 
 if($success)
 {

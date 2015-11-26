@@ -1,7 +1,9 @@
 [CmdletBinding(PositionalBinding=$True)]
 Param(
     [parameter(Mandatory=$true)]
-    [string]$ExampleDir
+    [string]$ExampleDir,
+    [parameter(Mandatory=$true)]
+    [string]$configFile
     )
 
 ###########################################################
@@ -37,7 +39,6 @@ if(-not (& "$scriptDir\CheckAzurePowershell.ps1"))
 ###########################################################
 # Get Run Configuration
 ###########################################################
-$configFile = Join-Path $ExampleDir "run\configurations.properties"
 # Make sure you run this in Microsoft Azure Powershell prompt
 if(-not (Test-Path $configFile))
 {
@@ -100,44 +101,15 @@ $startTime = Get-Date
 
 Write-SpecialLog "Creating ServiceBus Relay" (Get-ScriptName) (Get-ScriptLineNumber)
         
-$scriptCreateRelay = {
-    param($subName,$scriptDir,$configFile,$config)
-    Select-AzureSubscription -SubscriptionName $subName
-    & "$scriptDir\..\init.ps1"
-    Write-InfoLog "Creating Relay" (Get-ScriptName) (Get-ScriptLineNumber)
-    $sbKeys = & "$scriptDir\ServiceBus\CreateServiceBusRelay.ps1" $config["SERVICEBUS_NAMESPACE"] $config["SERVICEBUS_ENTITY_PATH"] $config["SERVICEBUS_RELAYTYPE"] $config["AZURE_LOCATION"] 
-    if($sbKeys)
-    {
-        & "$scriptDir\..\config\ReplaceStringInFile.ps1" $configFile $configFile @{SERVICEBUS_SEND_KEY=$sbKeys.Get_Item("sample-send")}
-        & "$scriptDir\..\config\ReplaceStringInFile.ps1" $configFile $configFile @{SERVICEBUS_LISTEN_KEY=$sbKeys.Get_Item("sample-listen")}
-        & "$scriptDir\..\config\ReplaceStringInFile.ps1" $configFile $configFile @{SERVICEBUS_MANAGE_KEY=$sbKeys.Get_Item("sample-manage")}
-    }
-}
-
-#Invoke-Command $scriptCreateRelay -ArgumentList $subName,$scriptDir,$configFile,$config
-
-$ehJob = Start-Job -Script $scriptCreateRelay -Name Relay -ArgumentList $subName,$scriptDir,$configFile,$config
-
-$jobs = Get-Job -State "Running"
-While ($jobs)
+Select-AzureSubscription -SubscriptionName $subName
+& "$scriptDir\..\init.ps1"
+Write-InfoLog "Creating Relay" (Get-ScriptName) (Get-ScriptLineNumber)
+$sbKeys = & "$scriptDir\ServiceBus\CreateServiceBusRelay.ps1" $config["SERVICEBUS_NAMESPACE"] $config["SERVICEBUS_ENTITY_PATH"] $config["AZURE_LOCATION"] 
+if($sbKeys)
 {
-    $jobsInfo = $jobs | % { "`r`nJob Id = " + $_.Id + ", Job Name = " + $_.Name + ", Job State = " + $_.State }
-    Write-InfoLog "Currently running Jobs:$jobsInfo" (Get-ScriptName) (Get-ScriptLineNumber)
-    sleep -s 10
-    if($ehJob -ne $null)
-    {
-        $jobOut = Get-Job -Id $ehJob.Id | Receive-Job
-        if($jobOut)
-        {
-            Write-InfoLog $jobOut (Get-ScriptName) (Get-ScriptLineNumber)
-        }
-    }
-    $jobs = Get-Job -State "Running"
-}
-
-if($ehJob -ne $null)
-{
-    Get-Job -Id $ehJob.Id | Remove-Job
+    & "$scriptDir\..\config\ReplaceStringInFile.ps1" $configFile $configFile @{SERVICEBUS_SEND_KEY=$sbKeys.Get_Item("samplesend")}
+    & "$scriptDir\..\config\ReplaceStringInFile.ps1" $configFile $configFile @{SERVICEBUS_LISTEN_KEY=$sbKeys.Get_Item("samplelisten")}
+    & "$scriptDir\..\config\ReplaceStringInFile.ps1" $configFile $configFile @{SERVICEBUS_MANAGE_KEY=$sbKeys.Get_Item("samplemanage")}
 }
 
 $finishTime = Get-Date

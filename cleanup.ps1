@@ -17,7 +17,7 @@ if(-not $?)
 ###########################################################
 
 #Try to delete as much as we can
-$ErrorActionPreference = "SilentlyContinue"
+#$ErrorActionPreference = "SilentlyContinue"
 
 $exclusions = @("*.spec", "*.zip")
 & "$scriptDir\scripts\cleanup.ps1" "$scriptDir" -Exclusions $exclusions

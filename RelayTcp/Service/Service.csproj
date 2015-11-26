@@ -52,6 +52,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\common\Main.cs">
+      <Link>Main.cs</Link>
+    </Compile>
     <Compile Include="PingContract.cs" />
     <Compile Include="PingService.cs" />
     <Compile Include="Program.cs" />

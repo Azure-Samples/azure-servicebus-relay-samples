@@ -4,7 +4,7 @@ set retryNumber=0
 set maxRetries=3
 
 :RESTORE
-nuget restore %*
+nuget restore %1 %2 %3 %4 %5
 
 rem problem?
 IF NOT ERRORLEVEL 1 GOTO :EOF

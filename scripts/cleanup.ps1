@@ -9,8 +9,8 @@ Param(
 ###########################################################
 # Start - Initialization - Invocation, Logging etc
 ###########################################################
-$VerbosePreference = "SilentlyContinue"
-$ErrorActionPreference = "Stop"
+#$VerbosePreference = "SilentlyContinue"
+#$ErrorActionPreference = "Stop"
 
 $scriptPath = $MyInvocation.MyCommand.Path
 $scriptDir = Split-Path $scriptPath
@@ -56,17 +56,18 @@ function Clean-ExampleFolder($cleanupDir)
 }
 
 #Try to delete as much as we can
-$ErrorActionPreference = "SilentlyContinue"
+#$ErrorActionPreference = "SilentlyContinue"
 
 $ExampleDir = $ExampleDir.Replace("""","")
-$runConfigurationFile = Join-Path $ExampleDir "run\configurations.properties"
+$runConfigurationFile = Join-Path $env:userprofile "azure-relay-config.properties" 
 
 Write-InfoLog "Checking for a run configuration file. Path: $runConfigurationFile" (Get-ScriptName) (Get-ScriptLineNumber)
 if(Test-Path $runConfigurationFile)
 {
     Write-InfoLog "Run configuration file found. Path: $runConfigurationFile" (Get-ScriptName) (Get-ScriptLineNumber)
     Write-SpecialLog "===== Azure Resources clean-up =====" (Get-ScriptName) (Get-ScriptLineNumber)
-    & "$scriptDir\azure\DeleteAzureResources.ps1" "$ExampleDir"
+   & "$scriptDir\azure\CleanAzureResources.ps1" "$ExampleDir" "$runConfigurationFile"
+   
 }
 else
 {
@@ -82,12 +83,6 @@ if($Exclusions)
 Clean-ExampleFolder "$scriptDir\..\tools"
 Clean-ExampleFolder "$ExampleDir"
 
-Get-ChildItem -Directory -Recurse -Path "$scriptDir\..\tools\maven" -Exclude $Exclusions | % `
-{
-    Write-InfoLog "Deleting $_" (Get-ScriptName) (Get-ScriptLineNumber)
-    Remove-Item -Path $_ -Recurse -Force -ErrorAction SilentlyContinue
-}
-
 Get-ChildItem -Directory -Recurse -Path $ExampleDir -Include "run" -Exclude $Exclusions | % `
 {
     Write-InfoLog "Deleting $_" (Get-ScriptName) (Get-ScriptLineNumber)
@@ -99,4 +94,4 @@ if(Test-Path "$scriptDir\..\packages")
     Remove-Item "$scriptDir\..\packages" -Force -Recurse -ErrorAction SilentlyContinue
 }
 
-Remove-Module "Logging-HDInsightExamples" -Force -ErrorAction SilentlyContinue
+Remove-Module "Logging-ServiceBusRelaySamples.psm1" -Force -ErrorAction SilentlyContinue

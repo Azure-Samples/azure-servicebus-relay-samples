@@ -17,7 +17,9 @@ if(-not $?)
 ###########################################################
 
 #Create Run Configuration
-& "$scriptDir\..\scripts\config\CreateRunConfig.ps1" $scriptDir "relaytcp" 
+$configFile = Join-Path $env:userprofile "azure-relay-config.properties" 
+
+& "$scriptDir\..\scripts\config\CreateRunConfig.ps1" $configFile
 if(-not $?)
 {
     Write-ErrorLog "Creation of Run Configuration failed. Please check the logs for error information or retry." (Get-ScriptName) (Get-ScriptLineNumber)
@@ -25,10 +27,9 @@ if(-not $?)
 }
 
 #Create Azure Resources
-& "$scriptDir\..\scripts\azure\CreateAzureResources.ps1" $scriptDir
+& "$scriptDir\..\scripts\azure\CreateAzureResources.ps1" $scriptDir $configFile
 if(-not $?)
 {
     Write-ErrorLog "Creation of Azure Resources failed. Please check the logs for error information or retry." (Get-ScriptName) (Get-ScriptLineNumber)
     throw "Creation of Azure Resources failed. Please check the logs for error information or retry."
 }
-

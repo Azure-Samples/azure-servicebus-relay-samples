@@ -27,12 +27,6 @@ if(-not $?)
 # End - Initialization - Invocation, Logging etc
 ###########################################################
 
-$serviceBusDll = & "$scriptDir\GetServiceBusDll.ps1"
-
-Write-InfoLog "Adding the assembly: '$serviceBusDll' to the script." (Get-ScriptName) (Get-ScriptLineNumber)
-Add-Type -Path $serviceBusDll
-Write-InfoLog "The assembly: '$serviceBusDll' has been successfully added to the script." (Get-ScriptName) (Get-ScriptLineNumber)
-
 try
 {
     $CurrentNamespace = Get-AzureSBNamespace -Name $Namespace
@@ -44,12 +38,6 @@ catch
 
 if ($CurrentNamespace)
 {
-    #Write-InfoLog "Connecting to namespace [$Namespace] in the [$($CurrentNamespace.Region)] region." (Get-ScriptName) (Get-ScriptLineNumber)
-    #$NamespaceManager = [Microsoft.ServiceBus.NamespaceManager]::CreateFromConnectionString($CurrentNamespace.ConnectionString);
-    #Write-InfoLog "NamespaceManager object for the [$Namespace] namespace has been successfully created." (Get-ScriptName) (Get-ScriptLineNumber)
-    #Write-InfoLog "Deleting EventHubs entity" (Get-ScriptName) (Get-ScriptLineNumber)
-    #$NamespaceManager.DeleteEventHub($Path)
-
     Write-InfoLog "Deleting ServiceBus Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
     try
     {

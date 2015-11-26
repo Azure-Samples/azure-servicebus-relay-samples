@@ -9,15 +9,15 @@
 // OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
 //---------------------------------------------------------------------------------
 
-namespace Microsoft.ServiceBus.Samples
+namespace RelaySamples
 {
     using System;
     using System.ServiceModel;
     using Microsoft.ServiceBus;
 
-    class Program
+    class Program : ITcpSenderSample
     {
-        static void Main(string[] args)
+        public void Run(string sendAddress, string sendToken)
         {
             Console.Write("Your Service Namespace: ");
             string serviceNamespace = Console.ReadLine();
@@ -51,11 +51,6 @@ namespace Microsoft.ServiceBus.Samples
 
             Console.WriteLine("Press [Enter] to exit.");
             Console.ReadLine();
-        }
-
-        static string GetHostName()
-        {
-            return System.Net.Dns.GetHostEntry(String.Empty).HostName;
         }
     }
 }

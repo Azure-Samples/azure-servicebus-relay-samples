@@ -9,30 +9,26 @@
 // OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
 //---------------------------------------------------------------------------------
 
-namespace Microsoft.ServiceBus.Samples
+namespace RelaySamples
 {
     using System;
+    using System.Collections.Generic;
     using System.ServiceModel;
     using System.ServiceModel.Description;
     using Microsoft.ServiceBus;
 
     class Program
     {
-        static void Main(string[] args)
+        static void Run(string serviceNamespace,
+                        string relayBasePath,
+                                                IDictionary<string, string> keys)
         {
-            Console.Write("Your Service Namespace: ");
-            string serviceNamespace = Console.ReadLine();
-            Console.Write("Your Issuer Name: ");
-            string issuerName = Console.ReadLine();
-            Console.Write("Your Issuer Secret: ");
-            string issuerSecret = Console.ReadLine();
+            Uri listenAddress = ServiceBusEnvironment.CreateServiceUri("sb", serviceNamespace, relayBasePath + "/nettcp");
 
-            Uri address = ServiceBusEnvironment.CreateServiceUri("sb", serviceNamespace, "PingService");
-
-            TransportClientEndpointBehavior sharedSecretServiceBusCredential = new TransportClientEndpointBehavior();
+            var f = new TransportClientEndpointBehavior() { TokenProvider} 
             sharedSecretServiceBusCredential.TokenProvider = TokenProvider.CreateSharedSecretTokenProvider(issuerName, issuerSecret);
             
-            ServiceHost host = new ServiceHost(typeof(PingService), address);
+            ServiceHost host = new ServiceHost(typeof(PingService), listenAddress);
 
             foreach (ServiceEndpoint endpoint in host.Description.Endpoints)
             {

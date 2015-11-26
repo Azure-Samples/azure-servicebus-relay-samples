@@ -58,3 +58,5 @@ else
     Write-SpecialLog "SUCCESS: All projects built successfully!" (Get-ScriptName) (Get-ScriptLineNumber)
     $buildList | % { Write-SpecialLog $_  (Get-ScriptName) (Get-ScriptLineNumber) }
 }
+
+& "$scriptDir\scripts\prepare.ps1"
