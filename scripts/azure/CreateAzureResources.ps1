@@ -107,9 +107,9 @@ Write-InfoLog "Creating Relay" (Get-ScriptName) (Get-ScriptLineNumber)
 $sbKeys = & "$scriptDir\ServiceBus\CreateServiceBusRelay.ps1" $config["SERVICEBUS_NAMESPACE"] $config["SERVICEBUS_ENTITY_PATH"] $config["AZURE_LOCATION"] 
 if($sbKeys)
 {
-    & "$scriptDir\..\config\ReplaceStringInFile.ps1" $configFile $configFile @{SERVICEBUS_SEND_KEY=$sbKeys.Get_Item("samplesend")}
-    & "$scriptDir\..\config\ReplaceStringInFile.ps1" $configFile $configFile @{SERVICEBUS_LISTEN_KEY=$sbKeys.Get_Item("samplelisten")}
-    & "$scriptDir\..\config\ReplaceStringInFile.ps1" $configFile $configFile @{SERVICEBUS_MANAGE_KEY=$sbKeys.Get_Item("samplemanage")}
+    & "$scriptDir\..\config\ReplaceStringInFile.ps1" $configFile $configFile @{SERVICEBUS_SEND_KEY=$sbKeys["samplesend"]}
+    & "$scriptDir\..\config\ReplaceStringInFile.ps1" $configFile $configFile @{SERVICEBUS_LISTEN_KEY=$sbKeys["samplelisten"]}
+    & "$scriptDir\..\config\ReplaceStringInFile.ps1" $configFile $configFile @{SERVICEBUS_MANAGE_KEY=$sbKeys["samplemanage"]}
 }
 
 $finishTime = Get-Date

@@ -1,56 +1,47 @@
-//---------------------------------------------------------------------------------
-// Microsoft (R)  Windows Azure SDK
-// Software Development Kit
-// 
-// Copyright (c) Microsoft Corporation. All rights reserved.  
-//
-// THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, 
-// EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
-// OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
-//---------------------------------------------------------------------------------
-
 namespace RelaySamples
 {
     using System;
     using System.ServiceModel;
     using Microsoft.ServiceBus;
+    using System.Threading.Tasks;
 
     class Program : ITcpSenderSample
     {
-        public void Run(string sendAddress, string sendToken)
+        public async Task Run(string sendAddress, string sendToken)
         {
-            Console.Write("Your Service Namespace: ");
-            string serviceNamespace = Console.ReadLine();
-            Console.Write("Your Issuer Name: ");
-            string issuerName = Console.ReadLine();
-            Console.Write("Your Issuer Secret: ");
-            string issuerSecret = Console.ReadLine();
+            // first we create the WCF "channel factory" that will be used to create a proxy
+            // to the remote service in the next step. The channel factory is constructed
+            // using the NetTcpRelayBinding, which comes with the Service Bus client assembly
+            // and understands the Service Bus Authorization model for clients. 
+            var channelFactory = new ChannelFactory<IClient>(new NetTcpRelayBinding(), sendAddress);
 
-            Uri serviceUri = ServiceBusEnvironment.CreateServiceUri("sb", serviceNamespace, "PingService");
+            // to configure authorization with Service Bus, we now add the SAS token provider 
+            // into which we pass the externally issued SAS token via a WCF behavior that is also 
+            // included in the Service Bus client
+            channelFactory.Endpoint.EndpointBehaviors.Add(
+                new TransportClientEndpointBehavior(
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken)));
 
-            TransportClientEndpointBehavior sharedSecretServiceBusCredential = new TransportClientEndpointBehavior();
-            sharedSecretServiceBusCredential.TokenProvider = TokenProvider.CreateSharedSecretTokenProvider(issuerName, issuerSecret);
-            
-            ChannelFactory<IPingContract> channelFactory = new ChannelFactory<IPingContract>("RelayEndpoint", new EndpointAddress(serviceUri));
-
-            channelFactory.Endpoint.Behaviors.Add(sharedSecretServiceBusCredential);
-            
-            IPingContract channel = channelFactory.CreateChannel();
-            Console.WriteLine("Opening Channel.");
-            channel.Open();
-
-            for (int i = 1; i <= 25; i++)
+            // now the interaction with the service is exactly as with any WCF service or 
+            // with most other RPC frameworks. You create a proxy from the channel factory
+            // and call the service. In the loop below we call the service 25 times and exit.
+            using (IClient client = channelFactory.CreateChannel())
             {
-                Console.WriteLine("Ping: {0}", i);
-                channel.Ping(i);
+                for (int i = 1; i <= 25; i++)
+                {
+                    var result = await client.Echo(DateTime.UtcNow.ToString());
+                    Console.WriteLine("Round {0}, Echo: {1}", i, result);
+                }
+                client.Close();
             }
-
-            Console.WriteLine("Closing Channel.");
-            channel.Close();
-            channelFactory.Close();
-
-            Console.WriteLine("Press [Enter] to exit.");
-            Console.ReadLine();
+        }
+        
+        // this is the service contract that echoes the contract of the service
+        [ServiceContract(Namespace = "", Name = "echo")]
+        interface IClient : IClientChannel
+        {
+            [OperationContract]
+            Task<string> Echo(string input);
         }
     }
 }

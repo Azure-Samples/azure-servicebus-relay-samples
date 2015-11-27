@@ -73,9 +73,9 @@ else
     $CurrentNamespace = Get-AzureSBNamespace -Name $Namespace
     Write-InfoLog "The namespace: $Namespace in location: $Location has been successfully created." (Get-ScriptName) (Get-ScriptLineNumber)
     
-    New-AzureSBAuthorizationRule -Name "root$SendRuleName" -Namespace $Namespace -Permission $("Send") -PrimaryKey $SendKey
-    New-AzureSBAuthorizationRule -Name "root$ListenRuleName" -Namespace $Namespace -Permission $("Listen") -PrimaryKey $ListenKey
-    New-AzureSBAuthorizationRule -Name "root$ManageRuleName" -Namespace $Namespace -Permission $("Manage", "Listen","Send") -PrimaryKey $ManageKey
+    $null = New-AzureSBAuthorizationRule -Name "root$SendRuleName" -Namespace $Namespace -Permission $("Send") -PrimaryKey $SendKey
+    $null = New-AzureSBAuthorizationRule -Name "root$ListenRuleName" -Namespace $Namespace -Permission $("Listen") -PrimaryKey $ListenKey
+    $null = New-AzureSBAuthorizationRule -Name "root$ManageRuleName" -Namespace $Namespace -Permission $("Manage", "Listen","Send") -PrimaryKey $ManageKey
 }
 
 # Create the NamespaceManager object to create the Relay
@@ -112,7 +112,6 @@ $scriptCreateRelayOfType = {
     {
         Write-InfoLog "Creating the relay: $relayPath of type $relayType in the namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
         $RelayDescription = New-Object -TypeName Microsoft.ServiceBus.Messaging.RelayDescription -ArgumentList $relayPath, $relayType
-        $RelayDescription.UserMetadata = $UserMetadata
         $RelayDescription = $NamespaceManager.CreateRelayAsync($RelayDescription).GetAwaiter().GetResult();
         Write-InfoLog "The relay: $Path in the namespace: $Namespace has been successfully created." (Get-ScriptName) (Get-ScriptLineNumber)
         $RelayDescription = $NamespaceManager.GetRelayAsync($relayPath).GetAwaiter().GetResult()
@@ -153,17 +152,19 @@ $scriptCreateRelayOfType = {
     $RelayDescription = $NamespaceManager.UpdateRelayAsync($RelayDescription).GetAwaiter().GetResult();
 }
 
-Invoke-Command $scriptCreateRelayOfType -ArgumentList $Path, "NetTcp", $RelayTypeMap."NetTcp"
-Invoke-Command $scriptCreateRelayOfType -ArgumentList $Path, "Http", $RelayTypeMap."Http"
-
-
+& Invoke-Command $scriptCreateRelayOfType -ArgumentList $Path, "nettcp", $RelayTypeMap."NetTcp"
+& Invoke-Command $scriptCreateRelayOfType -ArgumentList $Path, "http", $RelayTypeMap."Http"
 
 $finishTime = Get-Date
 $totalSeconds = ($finishTime - $startTime).TotalSeconds
 Write-InfoLog "CreateRelays completed in $totalSeconds seconds." (Get-ScriptName) (Get-ScriptLineNumber)
 
-return @{
+$keys = @{
   "$SendRuleName" = "$SendKey";
   "$ListenRuleName" = "$ListenKey";
   "$ManageRuleName" = "$ManageKey";
 }
+
+Write-InfoLog "keys $keys"
+
+return $keys

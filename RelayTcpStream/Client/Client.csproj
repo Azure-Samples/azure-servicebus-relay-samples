@@ -3,13 +3,13 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
+    <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{27CF1BE6-0280-46F8-BB19-BC7147E02B6A}</ProjectGuid>
+    <ProjectGuid>{3BFACE4B-B4A5-42FC-A029-62F42B3B82B8}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Microsoft.ServiceBus.Samples</RootNamespace>
-    <AssemblyName>Service</AssemblyName>
+    <AssemblyName>Client</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <NoWin32Manifest>true</NoWin32Manifest>
     <TargetFrameworkProfile />
@@ -55,6 +55,7 @@
     <Compile Include="..\..\common\Main.cs">
       <Link>Main.cs</Link>
     </Compile>
+    <Compile Include="ClientStream.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
