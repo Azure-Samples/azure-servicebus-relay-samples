@@ -5,7 +5,8 @@ This repository contains the official set of samples for the Azure Service Bus R
 The *Azure Service Bus Relay* allows creating secured, publicly discoverable and reachable endpoints for 
 privately hosted services that reside behind network address translation boundaries and/or are shielded by
 firewalls. In other words, you can host a publicly accessible service endpoint from any Windows computer 
-that can connect to the Internet.
+that can connect to the Internet. The Relay automatically tunnels through proxies, and will automatically 
+leverage the [WebSocket protocol](https://tools.ietf.org/html/rfc6455) when and if required.  
 
 The Relay offers two protocol options:
 * **HTTP** - HTTP services are the most interoperable option and allow accessing such relayed services from
@@ -45,7 +46,7 @@ or prompt you to log in and, if you have multiple subscriptions associated wiuth
 
 The script will then create a new Azure Service Bus Namespace for running the samples and configure it with shared access signature (SAS) rules
 granting send, listen, and management access to the new namespace. The configuration settings are stored in the file "azure-relay-config.properties", 
-which is placed into the user profile directory on your machine. All samples use the same [entry-point boilerplate code](Common/Main.cs) that 
+which is placed into the user profile directory on your machine. All samples use the same [entry-point boilerplate code](common/Main.cs) that 
 retrieves the settings from this file and then launches the sample code. The upside of this approach is that you will never have live credentials 
 left in configuration files or in code that you might accidentally check in when you fork this repository and experiment with it.   
 
@@ -56,10 +57,10 @@ your user profile directory.
  
 ## Common Considerations
 
-Most samples use shared [entry-point boilerplate code](Common/Main.cs) that loads the configuration and then launches the sample's 
+Most samples use shared [entry-point boilerplate code](common/Main.cs) that loads the configuration and then launches the sample's 
 **Program.Run()** instance methods. 
 
-Except for the samples that explicitly deomstrate the security capabilities, all samples are invoked with an externally issued SAS token 
+Except for the samples that explicitly demonstrate security capabilities, all samples are invoked with an externally issued SAS token 
 rather than a connection string or a raw SAS key. The security model design of Service Bus generally prefers clients to handle tokens 
 rather than keys, because tokens can be constrained to a particular scope and can be issued to expire at a certain time. 
 More about SAS and tokens can be found [here](https://azure.microsoft.com/documentation/articles/service-bus-shared-access-signature-authentication/).               
@@ -78,5 +79,10 @@ a simple HTTP client for accessing a resource. The [Service](RelayHttp/Service) 
 sample set. 
 * **RelayHttpNoAuth** - The [RelayHttpNoAuth](RelayHttpNoAuth) sample illustrates a plain HTTP listener for which the authorization gate at
 the Service Bus Relay has been turned off and that allows unauthenticated requests to pass through the Relay. This enables any client, including
-browser clients, to transparently interact with the HTTP service without having to present a Relay access token.      
+browser clients, to transparently interact with the HTTP service without having to present a Relay access token.
+
+##General Samples
+* **ConnectivityOptions** - This sample illustrates how to force HTTPS and WebSocket connectivity in tightly managed network environments 
+where the automatic detection of conjnectivity modes may fail.
+* **ProxyAuth** - This sample illustrates how to configure proxy authentication         
 

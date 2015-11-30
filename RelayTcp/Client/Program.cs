@@ -24,15 +24,21 @@ namespace RelaySamples
 
     class Program : ITcpSenderSample
     {
+        [ServiceContract(Namespace = "", Name = "echo")]
+        interface IClient : IClientChannel
+        {
+            [OperationContract]
+            Task<string> Echo(string input);
+        }
+
         public async Task Run(string sendAddress, string sendToken)
         {
-            var channelFactory = new ChannelFactory<IClient>(new NetTcpRelayBinding(), sendAddress);
-
-            channelFactory.Endpoint.EndpointBehaviors.Add(
+            var cf = new ChannelFactory<IClient>(new NetTcpRelayBinding(), sendAddress);
+            cf.Endpoint.EndpointBehaviors.Add(
                 new TransportClientEndpointBehavior(
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken)));
 
-            using (IClient client = channelFactory.CreateChannel())
+            using (var client = cf.CreateChannel())
             {
                 for (int i = 1; i <= 25; i++)
                 {
@@ -44,13 +50,6 @@ namespace RelaySamples
 
             Console.WriteLine("Press [Enter] to exit.");
             Console.ReadLine();
-        }
-
-        [ServiceContract(Namespace = "", Name = "echo")]
-        interface IClient : IClientChannel
-        {
-            [OperationContract]
-            Task<string> Echo(string input);
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿# Azure Service Bus Relay TCP Sample
 
-This sample demonstrates using the *NetTcpRelayBinding* binding.
+This sample shows how to create a simple TCP service.
 
 ## Prerequisites
 
