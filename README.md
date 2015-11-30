@@ -8,10 +8,10 @@ firewalls. In other words, you can host a publicly accessible service endpoint f
 that can connect to the Internet.
 
 The Relay offers two protocol options:
-1. **HTTP** - HTTP services are the most interoperable option and allow accessing such relayed services from
+* **HTTP** - HTTP services are the most interoperable option and allow accessing such relayed services from
     any platform. HTTP services can be plain REST-style services, or can use the full range of SOAP/WS-* 
 	capabilities of WCF, including message-level end-to-end message protection and authentication.   
-2. **TCP** - TCP (or "NetTcp") services use a .NET specific, bi-directional, connection-oriented protocol
+* **TCP** - TCP (or "NetTcp") services use a .NET specific, bi-directional, connection-oriented protocol
     that is significantly more efficient than HTTP, and specifically so with the Azure Service Bus Relay. Unless
 	interoperability with non-.NET clients is an immediate concern, applications should prefer this option.
 	It's possible to host multiple concurrent endpoints for the same service to provide an optimal choice for
