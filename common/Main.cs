@@ -1,19 +1,19 @@
-//  
-//  Copyright © Microsoft Corporation, All Rights Reserved
+//   
+//   Copyright © Microsoft Corporation, All Rights Reserved
 // 
-//  Licensed under the Apache License, Version 2.0 (the "License"); 
-//  you may not use this file except in compliance with the License. 
-//  You may obtain a copy of the License at
+//   Licensed under the Apache License, Version 2.0 (the "License"); 
+//   you may not use this file except in compliance with the License. 
+//   You may obtain a copy of the License at
 // 
-//  http://www.apache.org/licenses/LICENSE-2.0 
+//   http://www.apache.org/licenses/LICENSE-2.0 
 // 
-//  THIS CODE IS PROVIDED *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS
-//  OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
-//  ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A
-//  PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
+//   THIS CODE IS PROVIDED *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS
+//   OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
+//   ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A
+//   PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
 // 
-//  See the Apache License, Version 2.0 for the specific language
-//  governing permissions and limitations under the License. 
+//   See the Apache License, Version 2.0 for the specific language
+//   governing permissions and limitations under the License. 
 
 namespace RelaySamples
 {
@@ -74,7 +74,10 @@ namespace RelaySamples
                         if (propl.Length > 0)
                         {
                             var propi = propl.IndexOf('=');
-                            if (propi == -1) continue;
+                            if (propi == -1)
+                            {
+                                continue;
+                            }
                             var propKey = propl.Substring(0, propi - 1).Trim();
                             var propVal = propl.Substring(propi + 1).Trim();
                             if (properties.ContainsKey(propKey))
@@ -98,17 +101,24 @@ namespace RelaySamples
 
 
             var netTcpUri =
-                new UriBuilder("sb", properties["SERVICEBUS_NAMESPACE"] + "." + properties["SERVICEBUS_FQDN_SUFFIX"], -1,
+                new UriBuilder(
+                    "sb",
+                    properties["SERVICEBUS_NAMESPACE"] + "." + properties["SERVICEBUS_FQDN_SUFFIX"],
+                    -1,
                     "x" + properties["SERVICEBUS_ENTITY_PATH"] + "/NetTcp").ToString();
             var httpUri =
-                new UriBuilder("https", properties["SERVICEBUS_NAMESPACE"] + "." + properties["SERVICEBUS_FQDN_SUFFIX"],
+                new UriBuilder(
+                    "https",
+                    properties["SERVICEBUS_NAMESPACE"] + "." + properties["SERVICEBUS_FQDN_SUFFIX"],
                     -1,
                     "x" + properties["SERVICEBUS_ENTITY_PATH"] + "/Http").ToString();
 
             var program = Activator.CreateInstance(typeof (Program));
             if (program is ITcpListenerSampleUsingKeys)
             {
-                ((ITcpListenerSampleUsingKeys) program).Run(netTcpUri, "rootsamplelisten",
+                ((ITcpListenerSampleUsingKeys) program).Run(
+                    netTcpUri,
+                    "rootsamplelisten",
                     properties["SERVICEBUS_LISTEN_KEY"])
                     .GetAwaiter()
                     .GetResult();
@@ -121,7 +131,9 @@ namespace RelaySamples
             }
             if (program is IHttpListenerSampleUsingKeys)
             {
-                ((IHttpListenerSampleUsingKeys) program).Run(httpUri, "rootsamplelisten",
+                ((IHttpListenerSampleUsingKeys) program).Run(
+                    httpUri,
+                    "rootsamplelisten",
                     properties["SERVICEBUS_LISTEN_KEY"])
                     .GetAwaiter()
                     .GetResult();
@@ -136,7 +148,8 @@ namespace RelaySamples
             if (program is ITcpListenerSample)
             {
                 var token =
-                    TokenProvider.CreateSharedAccessSignatureTokenProvider("rootsamplelisten",
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider(
+                        "rootsamplelisten",
                         properties["SERVICEBUS_LISTEN_KEY"])
                         .GetWebTokenAsync(netTcpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
                 ((ITcpListenerSample) program).Run(netTcpUri, token).GetAwaiter().GetResult();
@@ -144,7 +157,8 @@ namespace RelaySamples
             else if (program is ITcpSenderSample)
             {
                 var token =
-                    TokenProvider.CreateSharedAccessSignatureTokenProvider("rootsamplesend",
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider(
+                        "rootsamplesend",
                         properties["SERVICEBUS_SEND_KEY"])
                         .GetWebTokenAsync(netTcpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
                 ((ITcpSenderSample) program).Run(netTcpUri, token).GetAwaiter().GetResult();
@@ -152,7 +166,8 @@ namespace RelaySamples
             if (program is IHttpListenerSample)
             {
                 var token =
-                    TokenProvider.CreateSharedAccessSignatureTokenProvider("rootsamplelisten",
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider(
+                        "rootsamplelisten",
                         properties["SERVICEBUS_LISTEN_KEY"])
                         .GetWebTokenAsync(httpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
                 ((IHttpListenerSample) program).Run(httpUri, token).GetAwaiter().GetResult();
@@ -160,7 +175,8 @@ namespace RelaySamples
             else if (program is IHttpSenderSample)
             {
                 var token =
-                    TokenProvider.CreateSharedAccessSignatureTokenProvider("rootsamplesend",
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider(
+                        "rootsamplesend",
                         properties["SERVICEBUS_SEND_KEY"])
                         .GetWebTokenAsync(httpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
                 ((IHttpSenderSample) program).Run(httpUri, token).GetAwaiter().GetResult();
