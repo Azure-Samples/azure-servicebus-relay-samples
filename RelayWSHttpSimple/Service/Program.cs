@@ -1,48 +1,29 @@
-//---------------------------------------------------------------------------------
-// Microsoft (R)  Windows Azure SDK
-// Software Development Kit
-// 
-// Copyright (c) Microsoft Corporation. All rights reserved.  
-//
-// THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, 
-// EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
-// OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
-//---------------------------------------------------------------------------------
 
-namespace Microsoft.ServiceBus.Samples
+using System.ServiceModel.Description;
+
+namespace RelaySamples
 {
     using System;
     using System.ServiceModel;
-    using System.ServiceModel.Description;
     using Microsoft.ServiceBus;
-    using Microsoft.ServiceBus.Description;
+    using System.Threading.Tasks;
 
-    class Program
+    class Program : IHttpListenerSample
     {
-        static void Main(string[] args)
+        public async Task Run(string httpAddress, string listenToken)
         {
-            Console.Write("Your Service Namespace: ");
-            string serviceNamespace = Console.ReadLine();
-            Console.Write("Your Issuer Name: ");
-            string issuerName = Console.ReadLine();
-            Console.Write("Your Issuer Secret: ");
-            string issuerSecret = Console.ReadLine();
-
-            Uri address = ServiceBusEnvironment.CreateServiceUri("http", serviceNamespace, "HttpEchoService");
-
-            TransportClientEndpointBehavior sharedSecretServiceBusCredential = new TransportClientEndpointBehavior();
-            sharedSecretServiceBusCredential.TokenProvider = TokenProvider.CreateSharedSecretTokenProvider(issuerName, issuerSecret);
-
-            ServiceHost host = new ServiceHost(typeof(EchoService), address);
-
-            foreach (ServiceEndpoint endpoint in host.Description.Endpoints)
+            var host = new ServiceHost(typeof(EchoService), new Uri(httpAddress));
+            // we're not going to project the help page through the relay
+            host.Description.Behaviors.Remove(typeof (ServiceDebugBehavior));
+            foreach (var endpoint in host.Description.Endpoints)
             {
-                endpoint.Behaviors.Add(sharedSecretServiceBusCredential);
+                endpoint.Behaviors.Add(new TransportClientEndpointBehavior(
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider(listenToken)));
             }
 
             host.Open();
 
-            Console.WriteLine("Service address: " + address);
+            Console.WriteLine("Service address: " + httpAddress);
             Console.WriteLine("Press [Enter] to exit");
             Console.ReadLine();
 

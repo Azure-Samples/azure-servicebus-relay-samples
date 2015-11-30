@@ -1,21 +1,9 @@
-﻿//---------------------------------------------------------------------------------
-// Microsoft (R)  Windows Azure SDK
-// Software Development Kit
-// 
-// Copyright (c) Microsoft Corporation. All rights reserved.  
-//
-// THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, 
-// EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
-// OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
-//---------------------------------------------------------------------------------
+﻿
+using System.ServiceModel;
 
-namespace Microsoft.ServiceBus.Samples
+namespace RelaySamples
 {
-    using System.ServiceModel;
-
-    [ServiceContract(Name = "ITraceContract",
-                     Namespace = "http://samples.microsoft.com/ServiceModel/Relay/CloudTrace",
-                     SessionMode = SessionMode.Allowed)]
+    [ServiceContract(Name = "tct", Namespace = "", SessionMode = SessionMode.Allowed)]
     public interface ITraceContract
     {
         [OperationContract(IsOneWay = true, Name = "Write1")]

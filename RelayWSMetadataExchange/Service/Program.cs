@@ -1,49 +1,50 @@
-//---------------------------------------------------------------------------------
-// Microsoft (R)  Windows Azure SDK
-// Software Development Kit
+//  
+//  Copyright © Microsoft Corporation, All Rights Reserved
 // 
-// Copyright (c) Microsoft Corporation. All rights reserved.  
-//
-// THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, 
-// EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
-// OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
-//---------------------------------------------------------------------------------
+//  Licensed under the Apache License, Version 2.0 (the "License"); 
+//  you may not use this file except in compliance with the License. 
+//  You may obtain a copy of the License at
+// 
+//  http://www.apache.org/licenses/LICENSE-2.0 
+// 
+//  THIS CODE IS PROVIDED *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS
+//  OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
+//  ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A
+//  PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
+// 
+//  See the Apache License, Version 2.0 for the specific language
+//  governing permissions and limitations under the License. 
 
-namespace Microsoft.ServiceBus.Samples
+namespace RelaySamples
 {
     using System;
     using System.ServiceModel;
     using System.ServiceModel.Description;
     using System.ServiceModel.Dispatcher;
+    using System.Threading.Tasks;
     using Microsoft.ServiceBus;
 
-    class Program
+    class Program : IHttpListenerSample
     {
-        static void Main(string[] args)
+        public async Task Run(string listenAddress, string listenToken)
         {
-            Console.Write("Your Service Namespace: ");
-            string serviceNamespace = Console.ReadLine();
-            Console.Write("Your Issuer Name: ");
-            string issuerName = Console.ReadLine();
-            Console.Write("Your Issuer Secret: ");
-            string issuerSecret = Console.ReadLine();
-
+            var u = new Uri(listenAddress);
             // create the service URI based on the service namespace
-            Uri sbAddress = ServiceBusEnvironment.CreateServiceUri("sb", serviceNamespace, "Echo/Service");
-            Uri httpAddress = ServiceBusEnvironment.CreateServiceUri("http", serviceNamespace, "Echo/mex");
+            var sbAddress = new UriBuilder(u) {Scheme = "sb", Path = u.PathAndQuery + "/service"}.Uri;
+            var httpAddress = new UriBuilder(u) {Scheme = "https", Path = u.PathAndQuery + "/mex"}.Uri;
 
             // create the credentials object for the endpoint
-            TransportClientEndpointBehavior sharedSecretServiceBusCredential = new TransportClientEndpointBehavior();
-            sharedSecretServiceBusCredential.TokenProvider = TokenProvider.CreateSharedSecretTokenProvider(issuerName, issuerSecret);
+            var sharedSecretServiceBusCredential = new TransportClientEndpointBehavior(
+                TokenProvider.CreateSharedAccessSignatureTokenProvider(listenToken));
 
             // create the service host reading the configuration
-            ServiceHost host = new ServiceHost(typeof(EchoService), sbAddress, httpAddress);
- 
+            var host = new ServiceHost(typeof (EchoService), sbAddress, httpAddress);
+
             // create the ServiceRegistrySettings behavior for the endpoint
             IEndpointBehavior serviceRegistrySettings = new ServiceRegistrySettings(DiscoveryType.Public);
 
             // add the Service Bus credentials to all endpoints specified in configuration
-            foreach (ServiceEndpoint endpoint in host.Description.Endpoints)
+            foreach (var endpoint in host.Description.Endpoints)
             {
                 endpoint.Behaviors.Add(serviceRegistrySettings);
                 endpoint.Behaviors.Add(sharedSecretServiceBusCredential);
@@ -52,10 +53,10 @@ namespace Microsoft.ServiceBus.Samples
             // open the service
             host.Open();
 
-            foreach (ChannelDispatcherBase channelDispatcherBase in host.ChannelDispatchers)
+            foreach (var channelDispatcherBase in host.ChannelDispatchers)
             {
-                ChannelDispatcher channelDispatcher = channelDispatcherBase as ChannelDispatcher;
-                foreach (EndpointDispatcher endpointDispatcher in channelDispatcher.Endpoints)
+                var channelDispatcher = channelDispatcherBase as ChannelDispatcher;
+                foreach (var endpointDispatcher in channelDispatcher.Endpoints)
                 {
                     Console.WriteLine("Listening at: {0}", endpointDispatcher.EndpointAddress);
                 }

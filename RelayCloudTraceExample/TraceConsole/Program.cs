@@ -9,14 +9,14 @@
 // OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
 //---------------------------------------------------------------------------------
 
-namespace Microsoft.ServiceBus.Samples
-{
-    using System;
-    using System.Configuration;
-    using System.ServiceModel;
-    using System.ServiceModel.Description;
-    using Microsoft.ServiceBus;
+using System;
+using System.Configuration;
+using System.ServiceModel;
+using System.ServiceModel.Description;
+using Microsoft.ServiceBus;
 
+namespace RelaySamples
+{
     class Program
     {
         static void Main(string[] args)

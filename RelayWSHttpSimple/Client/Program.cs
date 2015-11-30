@@ -9,43 +9,41 @@
 // OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
 //---------------------------------------------------------------------------------
 
-namespace Microsoft.ServiceBus.Samples
+using System.Threading.Tasks;
+
+namespace RelaySamples
 {
     using System;
     using System.ServiceModel;
     using Microsoft.ServiceBus;
 
-    class Program
+    class Program : IHttpSenderSample
     {
-        static void Main(string[] args)
+        public async Task Run(string httpAddress, string sendToken)
         {
-            Console.Write("Your Service Namespace: ");
-            string serviceNamespace = Console.ReadLine();
+            var channelFactory = 
+                new ChannelFactory<IEchoChannel>("ServiceBusEndpoint", new EndpointAddress(httpAddress));
+            channelFactory.Endpoint.Behaviors.Add( 
+                new TransportClientEndpointBehavior(TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken)));
 
-            Uri serviceUri = ServiceBusEnvironment.CreateServiceUri("http", serviceNamespace, "HttpEchoService");
-
-            ChannelFactory<IEchoChannel> channelFactory = new ChannelFactory<IEchoChannel>("ServiceBusEndpoint", new EndpointAddress(serviceUri));
-
-            IEchoChannel channel = channelFactory.CreateChannel();
-            channel.Open();
-          
-
-            Console.WriteLine("Enter text to echo (or [Enter] to exit):");
-            string input = Console.ReadLine();
-            while (input != String.Empty)
+            using (IEchoChannel channel = channelFactory.CreateChannel())
             {
-                try
+                Console.WriteLine("Enter text to echo (or [Enter] to exit):");
+                string input = Console.ReadLine();
+                while (input != string.Empty)
                 {
-                    Console.WriteLine("Server echoed: {0}", channel.Echo(input));
+                    try
+                    {
+                        Console.WriteLine("Server echoed: {0}", channel.Echo(input));
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Error: " + e.Message);
+                    }
+                    input = Console.ReadLine();
                 }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Error: " + e.Message);
-                }
-                input = Console.ReadLine();
+                channel.Close();
             }
-
-            channel.Close();
             channelFactory.Close();
         }
     }

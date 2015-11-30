@@ -8,7 +8,7 @@
     <ProjectGuid>{3BFACE4B-B4A5-42FC-A029-62F42B3B82B8}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Microsoft.ServiceBus.Samples</RootNamespace>
+    <RootNamespace>RelaySamples</RootNamespace>
     <AssemblyName>Client</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <NoWin32Manifest>true</NoWin32Manifest>

@@ -9,7 +9,7 @@
 // OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
 //---------------------------------------------------------------------------------
 
-namespace Microsoft.ServiceBus.Samples
+namespace RelaySamples
 {
     using System;
     using System.ServiceModel;

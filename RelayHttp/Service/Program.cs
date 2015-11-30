@@ -1,42 +1,52 @@
-//---------------------------------------------------------------------------------
-// Microsoft (R)  Windows Azure SDK
-// Software Development Kit
-// 
-// Copyright (c) Microsoft Corporation. All rights reserved.  
-//
-// THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, 
-// EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
-// OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
-//---------------------------------------------------------------------------------
 
-namespace Microsoft.ServiceBus.Samples
+namespace RelaySamples
 {
     using System;
     using System.ServiceModel;
-    using System.ServiceModel.Description;
     using Microsoft.ServiceBus;
     using System.ServiceModel.Web;
+    using System.IO;
+    using System.Threading.Tasks;
+    using System.Drawing.Imaging;
+    using System.Drawing;
 
-    class Program
+    [ServiceContract]
+    class Program : IHttpListenerSample
     {
-        static void Main(string[] args)
+        static Image bitmap = System.Drawing.Image.FromFile("image.jpg");
+
+        public async Task Run(string httpAddress, string listenToken)
         {
-            Console.Write("Your Service Namespace: ");
-            string serviceNamespace = Console.ReadLine();
+            using (var host = new WebServiceHost(GetType()))
+            {
+                host.AddServiceEndpoint(GetType(), 
+                        new WebHttpRelayBinding(
+                            EndToEndWebHttpSecurityMode.Transport, 
+                            RelayClientAuthenticationType.RelayAccessToken), httpAddress)
+                    .EndpointBehaviors.Add(
+                        new TransportClientEndpointBehavior(
+                            TokenProvider.CreateSharedAccessSignatureTokenProvider(listenToken)));
 
-            // Tranport level security is required for all *RelayBindings; hence, using https is required
-            Uri address = ServiceBusEnvironment.CreateServiceUri("https", serviceNamespace, "Image");
+                host.Open();
 
-            WebServiceHost host = new WebServiceHost(typeof(ImageService), address);
-            host.Open();
+                Console.WriteLine("Copy the following address into a browser to see the image: ");
+                Console.WriteLine(httpAddress + "/Image");
+                Console.WriteLine();
+                Console.WriteLine("Press [Enter] to exit");
+                Console.ReadLine();
 
-            Console.WriteLine("Copy the following address into a browser to see the image: ");
-            Console.WriteLine(address + "GetImage");
-            Console.WriteLine();
-            Console.WriteLine("Press [Enter] to exit");
-            Console.ReadLine();
+                host.Close();
+            }
+        }
 
-            host.Close();
+        [OperationContract, WebGet]
+        Stream Image()
+        {
+            var stream = new MemoryStream();
+            bitmap.Save(stream, ImageFormat.Jpeg);
+            stream.Position = 0;
+            WebOperationContext.Current.OutgoingResponse.ContentType = "image/jpeg";
+            return stream;
         }
     }
 }

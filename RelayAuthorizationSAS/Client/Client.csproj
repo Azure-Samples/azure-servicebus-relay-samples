@@ -7,7 +7,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{3BFACE4B-B4A5-42FC-A029-62F42B3B82B8}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Microsoft.ServiceBus.Samples</RootNamespace>
+    <RootNamespace>RelaySamples</RootNamespace>
     <AssemblyName>Client</AssemblyName>
     <NoWin32Manifest>true</NoWin32Manifest>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>

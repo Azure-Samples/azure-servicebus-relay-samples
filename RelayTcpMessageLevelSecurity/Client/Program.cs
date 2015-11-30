@@ -1,42 +1,40 @@
-//---------------------------------------------------------------------------------
-// Microsoft (R)  Windows Azure SDK
-// Software Development Kit
-// 
-// Copyright (c) Microsoft Corporation. All rights reserved.  
-//
-// THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, 
-// EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
-// OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
-//---------------------------------------------------------------------------------
 
-namespace Microsoft.ServiceBus.Samples
+namespace RelaySamples
 {
     using System;
     using System.ServiceModel;
+    using System.Threading.Tasks;
     using Microsoft.ServiceBus;
 
-    class Program
+    class Program : ITcpSenderSample
     {
-        static void Main(string[] args)
+        public async Task Run(string sendAddress, string sendToken)
         {
-            Console.Write("Enter the Service Namespace you want to connect to: ");
-            string serviceNamespace = Console.ReadLine();
+            var channelFactory =
+                new ChannelFactory<IEchoChannel>("RelayEndpoint",
+                    new EndpointAddress(new Uri(sendAddress), EndpointIdentity.CreateDnsIdentity("localhost")))
+                {
+                    Credentials =
+                    {
+                        UserName =
+                        {
+                            UserName = "test1",
+                            Password = "1tset"
+                        }
+                    }
+                };
+            channelFactory.Endpoint.Behaviors.Add(
+                new TransportClientEndpointBehavior(TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken)));
 
-            Uri serviceUri = ServiceBusEnvironment.CreateServiceUri("sb", serviceNamespace, "EchoService");
-
-            ChannelFactory<IEchoChannel> channelFactory = new ChannelFactory<IEchoChannel>("RelayEndpoint", new EndpointAddress(serviceUri, EndpointIdentity.CreateDnsIdentity("localhost")));
-            channelFactory.Credentials.UserName.UserName = "test1";
-            channelFactory.Credentials.UserName.Password = "1tset";
-
-            IEchoChannel channel = channelFactory.CreateChannel();
+            var channel = channelFactory.CreateChannel();
             try
             {
                 channel.Open();
 
 
                 Console.Write("Enter the text to echo (or press [Enter] to exit): ");
-                string input = Console.ReadLine();
-                while (input != String.Empty)
+                var input = Console.ReadLine();
+                while (input != string.Empty)
                 {
                     try
                     {

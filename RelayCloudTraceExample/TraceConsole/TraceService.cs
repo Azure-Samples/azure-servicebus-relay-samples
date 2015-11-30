@@ -9,12 +9,12 @@
 // OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
 //---------------------------------------------------------------------------------
 
-namespace Microsoft.ServiceBus.Samples
-{
-    using System;
-    using System.ServiceModel;
-    using System.Diagnostics;
+using System;
+using System.Diagnostics;
+using System.ServiceModel;
 
+namespace RelaySamples
+{
     [ServiceBehavior(Name = "TraceService", Namespace = "http://samples.microsoft.com/ServiceModel/Relay/CloudTrace")]
     class TraceService : ITraceContract
     {

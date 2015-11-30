@@ -1,12 +1,28 @@
+//  
+//  Copyright © Microsoft Corporation, All Rights Reserved
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License"); 
+//  you may not use this file except in compliance with the License. 
+//  You may obtain a copy of the License at
+// 
+//  http://www.apache.org/licenses/LICENSE-2.0 
+// 
+//  THIS CODE IS PROVIDED *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS
+//  OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
+//  ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A
+//  PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
+// 
+//  See the Apache License, Version 2.0 for the specific language
+//  governing permissions and limitations under the License. 
 
 namespace RelaySamples
 {
-    using Microsoft.ServiceBus;
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
     using System.Threading.Tasks;
+    using Microsoft.ServiceBus;
 
     // IF YOU ARE JUST GETTING STARTED, THESE ARE NOT THE DROIDS YOU ARE LOOKING FOR
     // PLEASE REVIEW "Program.cs" IN THE SAMPLE PROJECT
@@ -17,22 +33,32 @@ namespace RelaySamples
     // and then allows override of the settings from environment variables.
     class AppEntryPoint
     {
+#if STA
+        [STAThread]
+#endif
+
         static void Main(string[] args)
         {
-            var properties = new Dictionary<string, string>()
+            Run();
+        }
+
+        [DebuggerStepThrough]
+        static void Run()
+        {
+            var properties = new Dictionary<string, string>
             {
-                {"SERVICEBUS_NAMESPACE", null },
-                {"SERVICEBUS_ENTITY_PATH", null },
-                {"SERVICEBUS_FQDN_SUFFIX", null },
-                {"SERVICEBUS_SEND_KEY", null },
-                {"SERVICEBUS_LISTEN_KEY", null },
-                {"SERVICEBUS_MANAGE_KEY", null },
+                {"SERVICEBUS_NAMESPACE", null},
+                {"SERVICEBUS_ENTITY_PATH", null},
+                {"SERVICEBUS_FQDN_SUFFIX", null},
+                {"SERVICEBUS_SEND_KEY", null},
+                {"SERVICEBUS_LISTEN_KEY", null},
+                {"SERVICEBUS_MANAGE_KEY", null}
             };
 
             // read the settings file created by the ./setup.ps1 file
-            string settingsFile = Path.Combine(
+            var settingsFile = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                                          "azure-relay-config.properties");
+                "azure-relay-config.properties");
             if (File.Exists(settingsFile))
             {
                 using (var fs = new StreamReader(settingsFile))
@@ -63,7 +89,7 @@ namespace RelaySamples
             // get overrides from the environment
             foreach (var prop in properties)
             {
-                string env = Environment.GetEnvironmentVariable(prop.Key);
+                var env = Environment.GetEnvironmentVariable(prop.Key);
                 if (env != null)
                 {
                     properties[prop.Key] = env;
@@ -71,52 +97,74 @@ namespace RelaySamples
             }
 
 
-            var netTcpUri = new UriBuilder("sb", properties["SERVICEBUS_NAMESPACE"] + "." + properties["SERVICEBUS_FQDN_SUFFIX"], -1, "x" + properties["SERVICEBUS_ENTITY_PATH"] + "/NetTcp").ToString();
-            var httpUri = new UriBuilder("https", properties["SERVICEBUS_NAMESPACE"] + "." + properties["SERVICEBUS_FQDN_SUFFIX"], -1, "x" + properties["SERVICEBUS_ENTITY_PATH"] + "/Http").ToString();
+            var netTcpUri =
+                new UriBuilder("sb", properties["SERVICEBUS_NAMESPACE"] + "." + properties["SERVICEBUS_FQDN_SUFFIX"], -1,
+                    "x" + properties["SERVICEBUS_ENTITY_PATH"] + "/NetTcp").ToString();
+            var httpUri =
+                new UriBuilder("https", properties["SERVICEBUS_NAMESPACE"] + "." + properties["SERVICEBUS_FQDN_SUFFIX"],
+                    -1,
+                    "x" + properties["SERVICEBUS_ENTITY_PATH"] + "/Http").ToString();
 
-            var program = Activator.CreateInstance(typeof(Program));
+            var program = Activator.CreateInstance(typeof (Program));
             if (program is ITcpListenerSampleUsingKeys)
             {
-                ((ITcpListenerSampleUsingKeys)program).Run(netTcpUri, "rootsamplelisten", properties["SERVICEBUS_LISTEN_KEY"]).GetAwaiter().GetResult();
+                ((ITcpListenerSampleUsingKeys) program).Run(netTcpUri, "rootsamplelisten",
+                    properties["SERVICEBUS_LISTEN_KEY"])
+                    .GetAwaiter()
+                    .GetResult();
             }
             else if (program is ITcpSenderSampleUsingKeys)
             {
-                ((ITcpSenderSampleUsingKeys)program).Run(netTcpUri, "rootsamplesend", properties["SERVICEBUS_SEND_KEY"]).GetAwaiter().GetResult();
+                ((ITcpSenderSampleUsingKeys) program).Run(netTcpUri, "rootsamplesend", properties["SERVICEBUS_SEND_KEY"])
+                    .GetAwaiter()
+                    .GetResult();
             }
             if (program is IHttpListenerSampleUsingKeys)
             {
-                ((IHttpListenerSampleUsingKeys)program).Run(httpUri, "rootsamplelisten", properties["SERVICEBUS_LISTEN_KEY"]).GetAwaiter().GetResult();
+                ((IHttpListenerSampleUsingKeys) program).Run(httpUri, "rootsamplelisten",
+                    properties["SERVICEBUS_LISTEN_KEY"])
+                    .GetAwaiter()
+                    .GetResult();
             }
             else if (program is IHttpSenderSampleUsingKeys)
             {
-                ((IHttpSenderSampleUsingKeys)program).Run(httpUri, "rootsamplesend", properties["SERVICEBUS_SEND_KEY"]).GetAwaiter().GetResult();
+                ((IHttpSenderSampleUsingKeys) program).Run(httpUri, "rootsamplesend", properties["SERVICEBUS_SEND_KEY"])
+                    .GetAwaiter()
+                    .GetResult();
             }
 
             if (program is ITcpListenerSample)
             {
-                var token = TokenProvider.CreateSharedAccessSignatureTokenProvider("rootsamplelisten", properties["SERVICEBUS_LISTEN_KEY"])
-                                         .GetWebTokenAsync(netTcpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
-                ((ITcpListenerSample)program).Run(netTcpUri, token).GetAwaiter().GetResult();
+                var token =
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider("rootsamplelisten",
+                        properties["SERVICEBUS_LISTEN_KEY"])
+                        .GetWebTokenAsync(netTcpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
+                ((ITcpListenerSample) program).Run(netTcpUri, token).GetAwaiter().GetResult();
             }
             else if (program is ITcpSenderSample)
             {
-                var token = TokenProvider.CreateSharedAccessSignatureTokenProvider("rootsamplesend", properties["SERVICEBUS_SEND_KEY"])
-                                         .GetWebTokenAsync(netTcpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
-                ((ITcpSenderSample)program).Run(netTcpUri, token).GetAwaiter().GetResult();
+                var token =
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider("rootsamplesend",
+                        properties["SERVICEBUS_SEND_KEY"])
+                        .GetWebTokenAsync(netTcpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
+                ((ITcpSenderSample) program).Run(netTcpUri, token).GetAwaiter().GetResult();
             }
             if (program is IHttpListenerSample)
             {
-                var token = TokenProvider.CreateSharedAccessSignatureTokenProvider("rootsamplelisten", properties["SERVICEBUS_LISTEN_KEY"])
-                                         .GetWebTokenAsync(httpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
-                ((IHttpListenerSample)program).Run(httpUri, token).GetAwaiter().GetResult();
+                var token =
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider("rootsamplelisten",
+                        properties["SERVICEBUS_LISTEN_KEY"])
+                        .GetWebTokenAsync(httpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
+                ((IHttpListenerSample) program).Run(httpUri, token).GetAwaiter().GetResult();
             }
             else if (program is IHttpSenderSample)
             {
-                var token = TokenProvider.CreateSharedAccessSignatureTokenProvider("rootsamplesend", properties["SERVICEBUS_SEND_KEY"])
-                                         .GetWebTokenAsync(httpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
-                ((IHttpSenderSample)program).Run(httpUri, token).GetAwaiter().GetResult();
+                var token =
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider("rootsamplesend",
+                        properties["SERVICEBUS_SEND_KEY"])
+                        .GetWebTokenAsync(httpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
+                ((IHttpSenderSample) program).Run(httpUri, token).GetAwaiter().GetResult();
             }
-
         }
     }
 
