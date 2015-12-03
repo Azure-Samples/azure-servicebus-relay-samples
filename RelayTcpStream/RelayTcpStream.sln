@@ -5,7 +5,7 @@ VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F2719C45-3185-469A-B9CF-B40D24840883}"
 	ProjectSection(SolutionItems) = preProject
-		Readme.htm = Readme.htm
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Service", "Service\Service.csproj", "{27CF1BE6-0280-46F8-BB19-BC7147E02B6A}"

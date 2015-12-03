@@ -22,7 +22,7 @@ namespace RelaySamples
     using System.Threading.Tasks;
     using Microsoft.ServiceBus;
 
-    // This is an all-in-one Relay service that can be exposed through the 
+    // This is an all-in-one Relay service that can be hosted through the 
     // Service Bus Relay. 
     [ServiceContract(Namespace = "", Name = "echo"),
      ServiceBehavior(InstanceContextMode = InstanceContextMode.Single)]
@@ -32,7 +32,10 @@ namespace RelaySamples
         {
             using (ServiceHost host = new ServiceHost(this))
             {
-                host.AddServiceEndpoint(GetType(), new NetTcpRelayBinding(), listenAddress)
+                host.AddServiceEndpoint(
+                    GetType(),
+                    new NetTcpRelayBinding {IsDynamic = false},
+                    listenAddress)
                     .EndpointBehaviors.Add(
                         new TransportClientEndpointBehavior(
                             TokenProvider.CreateSharedAccessSignatureTokenProvider(listenToken)));

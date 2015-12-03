@@ -12,92 +12,82 @@
 namespace RelaySamples
 {
     using System;
-    using System.Globalization;
     using System.ServiceModel;
+    using System.Threading.Tasks;
+    using Microsoft.ServiceBus;
 
-    class Program
+    [ServiceContract]
+    interface IChat
     {
-        private Program(string[] args)
+        [OperationContract(IsOneWay = true)]
+        void Hello(string nickname);
+        [OperationContract(IsOneWay = true)]
+        void Chat(string nickname, string text);
+        [OperationContract(IsOneWay = true)]
+        void Bye(string nickname);
+    }
+
+    [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single)]
+    class Program : IDynamicSample, IChat
+    {
+        public void Hello(string nickname)
         {
-            // set the global relay connectivity mode based on optional command line arguments
-            // -tcp - enforces ConnectivityMode.Tcp
-            // -http - enforces ConnectivityMode.Http
-            // -auto (or no argument) - uses default ConnectivityMode.AutoDetect mode
-            ServiceBusEnvironment.SystemConnectivity.Mode = this.GetConnectivityMode(args);
+            Console.WriteLine("[" + nickname + "] joins");
         }
 
-        static void Main(string[] args)
+        public void Chat(string nickname, string text)
         {
-            Program programInstance = new Program(args);
-            programInstance.Run();
+            Console.WriteLine("[" + nickname + "] says: " + text);
         }
 
-        private void Run()
+        public void Bye(string nickname)
         {
-            Console.Write("What do you want to call your chat session? ");
-            string session = Console.ReadLine();
-            Console.Write("Your Service Namespace: ");
-            string serviceNamespace = Console.ReadLine();
-            Console.Write("Your Issuer Name: ");
-            string issuerName = Console.ReadLine();
-            Console.Write("Your Issuer Secret: ");
-            string issuerSecret = Console.ReadLine();
-            Console.Write("Your Chat Nickname: ");
-            string chatNickname = Console.ReadLine();
+            Console.WriteLine("[" + nickname + "] leaves");
+        }
 
-            TransportClientEndpointBehavior relayCredentials = new TransportClientEndpointBehavior();
-            relayCredentials.TokenProvider = TokenProvider.CreateSharedSecretTokenProvider(issuerName, issuerSecret);    
-            
-            Uri serviceAddress = ServiceBusEnvironment.CreateServiceUri("sb", serviceNamespace,
-                   String.Format(CultureInfo.InvariantCulture, "{0}/MulticastService/", session));
-            ServiceHost host = new ServiceHost(typeof(MulticastService), serviceAddress);
-            host.Description.Endpoints[0].Behaviors.Add(relayCredentials);
-            host.Open();
-
-            ChannelFactory<IMulticastChannel> channelFactory = new ChannelFactory<IMulticastChannel>("RelayEndpoint", new EndpointAddress(serviceAddress));
-            channelFactory.Endpoint.Behaviors.Add(relayCredentials);
-            IMulticastChannel channel = channelFactory.CreateChannel();
-            channel.Open();
-
+        void RunChat(IChat channel, string chatNickname)
+        {
             Console.WriteLine("\nPress [Enter] to exit\n");
-
             channel.Hello(chatNickname);
 
             string input = Console.ReadLine();
-            while (input != String.Empty)
+            while (input != string.Empty)
             {
                 channel.Chat(chatNickname, input);
                 input = Console.ReadLine();
             }
-
             channel.Bye(chatNickname);
-
-            channel.Close();
-            channelFactory.Close();
-            host.Close();
         }
 
-        private ConnectivityMode GetConnectivityMode(string[] args)
+        public Task Run(string serviceBusHostName, string token)
         {
-            foreach (string arg in args)
+            Console.Write("Enter your nick:");
+            var chatNickname = Console.ReadLine();
+            Console.Write("Enter room name:");
+            var session = Console.ReadLine();
+
+            var serviceAddress = new UriBuilder("sb", serviceBusHostName, -1, "/chat/" + session).ToString();
+            var netEventRelayBinding = new NetEventRelayBinding();
+            var tokenBehavior = new TransportClientEndpointBehavior(TokenProvider.CreateSharedAccessSignatureTokenProvider(token));
+
+            using (var host = new ServiceHost(this))
             {
-                if (arg.Equals("/auto", StringComparison.InvariantCultureIgnoreCase) ||
-                     arg.Equals("-auto", StringComparison.InvariantCultureIgnoreCase))
+                host.AddServiceEndpoint(typeof(IChat), netEventRelayBinding, serviceAddress)
+                    .EndpointBehaviors.Add(tokenBehavior);
+                host.Open();
+
+                using (var channelFactory = new ChannelFactory<IChat>(netEventRelayBinding, serviceAddress))
                 {
-                    return ConnectivityMode.AutoDetect;
+                    channelFactory.Endpoint.Behaviors.Add(tokenBehavior);
+                    var channel = channelFactory.CreateChannel();
+
+                    this.RunChat(channel, chatNickname);
+
+                    channelFactory.Close();
                 }
-                else if (arg.Equals("/tcp", StringComparison.InvariantCultureIgnoreCase) ||
-                     arg.Equals("-tcp", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return ConnectivityMode.Tcp;
-                }
-                else if (arg.Equals("/http", StringComparison.InvariantCultureIgnoreCase) ||
-                     arg.Equals("-http", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return ConnectivityMode.Http;
-                }
+                host.Close();
             }
-            return ConnectivityMode.AutoDetect;
-        }        
+            return Task.FromResult(true);
+        }
     }
 }

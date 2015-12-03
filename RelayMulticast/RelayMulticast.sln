@@ -5,12 +5,10 @@ VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{17090A02-50B0-4227-98A6-2D4D9509FD50}"
 	ProjectSection(SolutionItems) = preProject
-		Readme.htm = Readme.htm
+		Readme.md = Readme.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MulticastSample", "MulticastSample.csproj", "{E9B166F4-65FB-4C3D-8E7F-E369B56E836E}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NewFolder1", "NewFolder1", "{D1E360C6-08FE-4F19-B9EF-BFCC05D77AB8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chat", "Chat.csproj", "{E9B166F4-65FB-4C3D-8E7F-E369B56E836E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

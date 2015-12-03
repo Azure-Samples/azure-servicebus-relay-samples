@@ -5,7 +5,7 @@ VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F1CC58B4-F409-4873-9B7D-F45DF1677593}"
 	ProjectSection(SolutionItems) = preProject
-		Readme.htm = Readme.htm
+		Readme.md = Readme.md
 		svcutil.exe.config = svcutil.exe.config
 	EndProjectSection
 EndProject

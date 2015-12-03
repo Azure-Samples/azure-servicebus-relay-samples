@@ -24,7 +24,8 @@ namespace RelaySamples
     using System.Threading.Tasks;
     using Microsoft.ServiceBus;
 
-    // IF YOU ARE JUST GETTING STARTED, THESE ARE NOT THE DROIDS YOU ARE LOOKING FOR
+    // IF YOU ARE JUST GETTING STARTED, 
+    // THESE ARE NOT THE DROIDS YOU ARE LOOKING FOR
     // PLEASE REVIEW "Program.cs" IN THE SAMPLE PROJECT
 
     // This is a common entry point class for all samples that provides
@@ -33,6 +34,13 @@ namespace RelaySamples
     // and then allows override of the settings from environment variables.
     class AppEntryPoint
     {
+        static readonly string servicebusNamespace = "SERVICEBUS_NAMESPACE";
+        static readonly string servicebusEntityPath = "SERVICEBUS_ENTITY_PATH";
+        static readonly string servicebusFqdnSuffix = "SERVICEBUS_FQDN_SUFFIX";
+        static readonly string servicebusSendKey = "SERVICEBUS_SEND_KEY";
+        static readonly string servicebusListenKey = "SERVICEBUS_LISTEN_KEY";
+        static readonly string servicebusManageKey = "SERVICEBUS_MANAGE_KEY";
+        static readonly string samplePropertiesFileName = "azure-relay-config.properties";
 #if STA
         [STAThread]
 #endif
@@ -47,42 +55,46 @@ namespace RelaySamples
         {
             var properties = new Dictionary<string, string>
             {
-                {"SERVICEBUS_NAMESPACE", null},
-                {"SERVICEBUS_ENTITY_PATH", null},
-                {"SERVICEBUS_FQDN_SUFFIX", null},
-                {"SERVICEBUS_SEND_KEY", null},
-                {"SERVICEBUS_LISTEN_KEY", null},
-                {"SERVICEBUS_MANAGE_KEY", null}
+                {servicebusNamespace, null},
+                {servicebusEntityPath, null},
+                {servicebusFqdnSuffix, null},
+                {servicebusSendKey, null},
+                {servicebusListenKey, null},
+                {servicebusManageKey, null}
             };
 
             // read the settings file created by the ./setup.ps1 file
             var settingsFile = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                "azure-relay-config.properties");
+                samplePropertiesFileName);
             if (File.Exists(settingsFile))
             {
                 using (var fs = new StreamReader(settingsFile))
                 {
                     while (!fs.EndOfStream)
                     {
-                        var propl = fs.ReadLine().Trim();
-                        var cmt = propl.IndexOf('#');
-                        if (cmt > -1)
+                        var readLine = fs.ReadLine();
+                        if (readLine != null)
                         {
-                            propl = propl.Substring(0, cmt).Trim();
-                        }
-                        if (propl.Length > 0)
-                        {
-                            var propi = propl.IndexOf('=');
-                            if (propi == -1)
+                            var propl = readLine.Trim();
+                            var cmt = propl.IndexOf('#');
+                            if (cmt > -1)
                             {
-                                continue;
+                                propl = propl.Substring(0, cmt).Trim();
                             }
-                            var propKey = propl.Substring(0, propi - 1).Trim();
-                            var propVal = propl.Substring(propi + 1).Trim();
-                            if (properties.ContainsKey(propKey))
+                            if (propl.Length > 0)
                             {
-                                properties[propKey] = propVal;
+                                var propi = propl.IndexOf('=');
+                                if (propi == -1)
+                                {
+                                    continue;
+                                }
+                                var propKey = propl.Substring(0, propi - 1).Trim();
+                                var propVal = propl.Substring(propi + 1).Trim();
+                                if (properties.ContainsKey(propKey))
+                                {
+                                    properties[propKey] = propVal;
+                                }
                             }
                         }
                     }
@@ -99,33 +111,24 @@ namespace RelaySamples
                 }
             }
 
-
-            var netTcpUri =
-                new UriBuilder(
-                    "sb",
-                    properties["SERVICEBUS_NAMESPACE"] + "." + properties["SERVICEBUS_FQDN_SUFFIX"],
-                    -1,
-                    "x" + properties["SERVICEBUS_ENTITY_PATH"] + "/NetTcp").ToString();
-            var httpUri =
-                new UriBuilder(
-                    "https",
-                    properties["SERVICEBUS_NAMESPACE"] + "." + properties["SERVICEBUS_FQDN_SUFFIX"],
-                    -1,
-                    "x" + properties["SERVICEBUS_ENTITY_PATH"] + "/Http").ToString();
+            var hostName = properties[servicebusNamespace] + "." + properties[servicebusFqdnSuffix];
+            var rootUri = new UriBuilder("http", hostName, -1, "/").ToString();
+            var netTcpUri = new UriBuilder("sb", hostName, -1, properties[servicebusEntityPath] + "/NetTcp").ToString();
+            var httpUri = new UriBuilder("https", hostName, -1, properties[servicebusEntityPath] + "/Http").ToString();
 
             var program = Activator.CreateInstance(typeof (Program));
             if (program is ITcpListenerSampleUsingKeys)
             {
                 ((ITcpListenerSampleUsingKeys) program).Run(
                     netTcpUri,
-                    "rootsamplelisten",
-                    properties["SERVICEBUS_LISTEN_KEY"])
+                    "samplelisten",
+                    properties[servicebusListenKey])
                     .GetAwaiter()
                     .GetResult();
             }
             else if (program is ITcpSenderSampleUsingKeys)
             {
-                ((ITcpSenderSampleUsingKeys) program).Run(netTcpUri, "rootsamplesend", properties["SERVICEBUS_SEND_KEY"])
+                ((ITcpSenderSampleUsingKeys) program).Run(netTcpUri, "samplesend", properties[servicebusSendKey])
                     .GetAwaiter()
                     .GetResult();
             }
@@ -133,14 +136,14 @@ namespace RelaySamples
             {
                 ((IHttpListenerSampleUsingKeys) program).Run(
                     httpUri,
-                    "rootsamplelisten",
-                    properties["SERVICEBUS_LISTEN_KEY"])
+                    "samplelisten",
+                    properties[servicebusListenKey])
                     .GetAwaiter()
                     .GetResult();
             }
             else if (program is IHttpSenderSampleUsingKeys)
             {
-                ((IHttpSenderSampleUsingKeys) program).Run(httpUri, "rootsamplesend", properties["SERVICEBUS_SEND_KEY"])
+                ((IHttpSenderSampleUsingKeys) program).Run(httpUri, "samplesend", properties[servicebusSendKey])
                     .GetAwaiter()
                     .GetResult();
             }
@@ -149,8 +152,8 @@ namespace RelaySamples
             {
                 var token =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "rootsamplelisten",
-                        properties["SERVICEBUS_LISTEN_KEY"])
+                        "samplelisten",
+                        properties[servicebusListenKey])
                         .GetWebTokenAsync(netTcpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
                 ((ITcpListenerSample) program).Run(netTcpUri, token).GetAwaiter().GetResult();
             }
@@ -158,8 +161,8 @@ namespace RelaySamples
             {
                 var token =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "rootsamplesend",
-                        properties["SERVICEBUS_SEND_KEY"])
+                        "samplesend",
+                        properties[servicebusSendKey])
                         .GetWebTokenAsync(netTcpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
                 ((ITcpSenderSample) program).Run(netTcpUri, token).GetAwaiter().GetResult();
             }
@@ -167,8 +170,8 @@ namespace RelaySamples
             {
                 var token =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "rootsamplelisten",
-                        properties["SERVICEBUS_LISTEN_KEY"])
+                        "samplelisten",
+                        properties[servicebusListenKey])
                         .GetWebTokenAsync(httpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
                 ((IHttpListenerSample) program).Run(httpUri, token).GetAwaiter().GetResult();
             }
@@ -176,10 +179,37 @@ namespace RelaySamples
             {
                 var token =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "rootsamplesend",
-                        properties["SERVICEBUS_SEND_KEY"])
+                        "samplesend",
+                        properties[servicebusSendKey])
                         .GetWebTokenAsync(httpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
                 ((IHttpSenderSample) program).Run(httpUri, token).GetAwaiter().GetResult();
+            }
+            else if (program is IDynamicSenderSample)
+            {
+                var token =
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider(
+                        "rootsamplesend",
+                        properties[servicebusSendKey])
+                        .GetWebTokenAsync(rootUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
+                ((IDynamicSenderSample) program).Run(hostName, token).GetAwaiter().GetResult();
+            }
+            else if (program is IDynamicListenerSample)
+            {
+                var token =
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider(
+                        "rootsamplelisten",
+                        properties[servicebusListenKey])
+                        .GetWebTokenAsync(rootUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
+                ((IDynamicListenerSample) program).Run(hostName, token).GetAwaiter().GetResult();
+            }
+            else if (program is IDynamicSample)
+            {
+                var token =
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider(
+                        "rootsamplemanage",
+                        properties[servicebusManageKey])
+                        .GetWebTokenAsync(rootUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
+                ((IDynamicSample) program).Run(hostName, token).GetAwaiter().GetResult();
             }
         }
     }
@@ -222,5 +252,20 @@ namespace RelaySamples
     interface IHttpListenerSample
     {
         Task Run(string listenAddress, string listenToken);
+    }
+
+    interface IDynamicSenderSample
+    {
+        Task Run(string serviceBusHostName, string sendToken);
+    }
+
+    interface IDynamicListenerSample
+    {
+        Task Run(string serviceBusHostName, string listenToken);
+    }
+
+    interface IDynamicSample
+    {
+        Task Run(string serviceBusHostName, string token);
     }
 }

@@ -55,7 +55,7 @@
     <Compile Include="..\..\common\Main.cs">
       <Link>Main.cs</Link>
     </Compile>
-    <Compile Include="ClientStream.cs" />
+    <Compile Include="StreamClient.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

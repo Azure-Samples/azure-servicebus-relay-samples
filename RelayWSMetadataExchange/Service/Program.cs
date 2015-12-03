@@ -24,41 +24,42 @@ namespace RelaySamples
     using System.Threading.Tasks;
     using Microsoft.ServiceBus;
 
-    class Program : IHttpListenerSample
+    class Program : IDynamicListenerSample
     {
-        public async Task Run(string listenAddress, string listenToken)
+        public async Task Run(string serviceBusHostName, string listenToken)
         {
-            var u = new Uri(listenAddress);
             // create the service URI based on the service namespace
-            var sbAddress = new UriBuilder(u) {Scheme = "sb", Path = u.PathAndQuery + "/service"}.Uri;
-            var httpAddress = new UriBuilder(u) {Scheme = "https", Path = u.PathAndQuery + "/mex"}.Uri;
-
-            // create the credentials object for the endpoint
-            var sharedSecretServiceBusCredential = new TransportClientEndpointBehavior(
-                TokenProvider.CreateSharedAccessSignatureTokenProvider(listenToken));
-
+            var serviceAddress = new UriBuilder("https", serviceBusHostName, -1, "echoservice/service").Uri;
+            
             // create the service host reading the configuration
-            var host = new ServiceHost(typeof (EchoService), sbAddress, httpAddress);
-
-            // create the ServiceRegistrySettings behavior for the endpoint
-            IEndpointBehavior serviceRegistrySettings = new ServiceRegistrySettings(DiscoveryType.Public);
-
+            var host = new ServiceHost(typeof(EchoService), serviceAddress);
+            var db = host.Description.Behaviors.Find<ServiceDebugBehavior>();
+            db.HttpsHelpPageUrl = new Uri(serviceAddress, "wsdl");
             // add the Service Bus credentials to all endpoints specified in configuration
             foreach (var endpoint in host.Description.Endpoints)
             {
-                endpoint.Behaviors.Add(serviceRegistrySettings);
-                endpoint.Behaviors.Add(sharedSecretServiceBusCredential);
+                if (endpoint.Contract.ContractType == typeof (IMetadataExchange))
+                {
+                    db.HttpsHelpPageUrl = new Uri(serviceAddress, "mex");
+                }
+                endpoint.Behaviors.Add(new ServiceRegistrySettings(DiscoveryType.Public));
+                endpoint.Behaviors.Add(
+                    new TransportClientEndpointBehavior(
+                        TokenProvider.CreateSharedAccessSignatureTokenProvider(listenToken)));
             }
-
+            
             // open the service
             host.Open();
 
             foreach (var channelDispatcherBase in host.ChannelDispatchers)
             {
                 var channelDispatcher = channelDispatcherBase as ChannelDispatcher;
-                foreach (var endpointDispatcher in channelDispatcher.Endpoints)
+                if (channelDispatcher != null)
                 {
-                    Console.WriteLine("Listening at: {0}", endpointDispatcher.EndpointAddress);
+                    foreach (var endpointDispatcher in channelDispatcher.Endpoints)
+                    {
+                        Console.WriteLine("Listening at: {0}", endpointDispatcher.EndpointAddress);
+                    }
                 }
             }
 
