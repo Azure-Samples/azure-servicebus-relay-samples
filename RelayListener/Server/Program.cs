@@ -18,51 +18,92 @@
 namespace RelaySamples
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
     using AzureServiceBus.RelayListener;
+    using Microsoft.ServiceBus;
 
     class Program : ITcpListenerSample
     {
-        static readonly Random rnd = new Random();
+        static readonly Random Rnd = new Random();
        
+        // this semaphore is gating the number of concurrent connections this 
+        // program is willing the handle. Set to 5 as an example. Once the 
+        // program has more than 5 connections going, it will not accept 
+        // further connections until an ongoing one completed processing
+        readonly SemaphoreSlim maxConcurrentConnections = new SemaphoreSlim(5);
+
         public async Task Run(string listenAddress, string listenToken)
         {
             Console.WriteLine("Starting listener on {0}", listenAddress);
-            var client = new RelayListener(listenAddress, listenToken, RelayAddressType.Configured);
-            RelayConnection connection;
-            do
+            using (var relayListener = new RelayListener(listenAddress, TokenProvider.CreateSharedAccessSignatureTokenProvider(listenToken), RelayAddressType.Configured))
             {
-               connection = await client.AcceptConnectionAsync(TimeSpan.MaxValue);
-                if (connection != null)
+                await relayListener.StartAsync();
+                RelayConnection connection;
+                do
                 {
-                    // not awaiting
-#pragma warning disable 4014
-                    ProcessConnection(connection);
-#pragma warning restore 4014
-                }
-            }
-            while (connection != null);
-            
+                    await maxConcurrentConnections.WaitAsync();
+                    try
+                    {
+                        connection = await relayListener.AcceptConnectionAsync(TimeSpan.MaxValue);
+                    }
+                    catch
+                    {
+                        maxConcurrentConnections.Release();
+                        throw;
+                    }
 
+                    if (connection != null)
+                    {
+                        // not awaiting, we're handling these in parallel on the I/O thread pool
+                        // and simply running into the first await inside ProcessConnection
+                        // is sufficient to get the handling off this thread
+#pragma warning disable 4014
+                        ProcessConnection(connection).ContinueWith(
+                            t => maxConcurrentConnections.Release());
+#pragma warning restore 4014
+                    }
+                    else
+                    {
+                        maxConcurrentConnections.Release();
+                    }
+
+                } while (connection != null);
+            }
         }
 
         async Task ProcessConnection(RelayConnection connection)
         {
+            // implements a simple protocol that uploads and downloads 1MB of data
+            // since the connection is duplex, this happens in parallel.
+
             Console.WriteLine("Processing connection");
-            var buf = new byte[1024];
-            int bytesRead;
-            do
+            // download
+            var download = Task.Run(async () =>
             {
-                bytesRead = await connection.ReadAsync(buf, 0, buf.Length);
-            }
-            while (bytesRead > 0);
-            
+                Console.WriteLine("downloading data");
+                var buf = new byte[1024*1024];
+                int totalBytes = 0, bytesRead;
+                do
+                {
+                    totalBytes += bytesRead = await connection.ReadAsync(buf, 0, buf.Length);
+                }
+                while (bytesRead > 0);
+                Console.WriteLine("downloaded complete, {0} bytes", totalBytes);
+            });
+
             // upload
-            for (int i = 0; i < 1024; i++)
+            var upload = Task.Run(async () =>
             {
-                rnd.NextBytes(buf);
-                await connection.WriteAsync(buf, 0, buf.Length);
-            }
+                var buf = new byte[1024];
+                for (var i = 0; i < 1024; i++)
+                {
+                    Rnd.NextBytes(buf);
+                    await connection.WriteAsync(buf, 0, buf.Length);
+                }
+                await connection.ShutdownAsync();
+            });
+            Task.WaitAll(upload, download);
             connection.Close();
             Console.WriteLine("Connection done");
         }

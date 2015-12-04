@@ -20,38 +20,62 @@ namespace RelaySamples
     using System;
     using System.Threading.Tasks;
     using AzureServiceBus.RelayListener;
+    using Microsoft.ServiceBus;
 
     class Program : ITcpSenderSample
     {
-        static Random rnd = new Random();
+        static readonly Random rnd = new Random();
+
         public async Task Run(string sendAddress, string sendToken)
         {
             Console.WriteLine("Starting client on {0}", sendAddress);
 
-            var client = new RelayClient(sendAddress, sendToken);
+            var client = new RelayClient(sendAddress, TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken));
             var connection = await client.ConnectAsync();
 
-            Console.WriteLine("Uploading 1MByte");
-            var buf = new byte[1024];
-            for (int i = 0; i < 1024; i++)
-            {
-                rnd.NextBytes(buf);
-                await connection.WriteAsync(buf, 0, buf.Length);
-            }
-            await connection.ShutdownAsync();
+            await SendAndReceive(connection);
 
-            Console.WriteLine("Downloading 1MByte");
-            int bytesRead;
-            do
-            {
-                bytesRead = await connection.ReadAsync(buf, 0, buf.Length);
-            }
-            while (bytesRead > 0);
-
+            connection.Close();
+            
             Console.WriteLine("Done. ENTER to exit");
             Console.ReadLine();
         }
-    }
 
-    
+        Task SendAndReceive(RelayConnection connection)
+        {
+            // implements a simple protocol that uploads and downloads 1MB of data
+            // since the connection is duplex, this happens in parallel.
+
+            Console.WriteLine("Processing connection");
+            // download
+            var download = Task.Run(async () =>
+            {
+                Console.WriteLine("Downloading 1MByte");
+                var buf = new byte[1024*1024];
+                int bytesRead;
+                do
+                {
+                    bytesRead = await connection.ReadAsync(buf, 0, buf.Length);
+                } while (bytesRead > 0);
+                Console.WriteLine("Download done");
+            });
+
+            // upload
+            var upload = Task.Run(async () =>
+            {
+                Console.WriteLine("Uploading 1MByte");
+                var buf = new byte[16*1024];
+                for (var i = 0; i < 1024/16; i++)
+                {
+                    rnd.NextBytes(buf);
+                    await connection.WriteAsync(buf, 0, buf.Length);
+                }
+                await connection.ShutdownAsync();
+                Console.WriteLine("Upload done");
+            });
+            return Task.WhenAll(upload, download);
+        }
+        
+        
+    }
 }

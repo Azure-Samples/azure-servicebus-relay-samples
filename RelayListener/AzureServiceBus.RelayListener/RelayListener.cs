@@ -24,66 +24,99 @@ namespace AzureServiceBus.RelayListener
     using System.Threading.Tasks;
     using Microsoft.ServiceBus;
 
-    public class RelayListener
+    public sealed class RelayListener : IDisposable
     {
-        IChannelListener<IDuplexSessionChannel> listener;
         readonly string address;
         readonly RelayAddressType relayAddressType;
         readonly TokenProvider tokenProvider;
+        object listenerMutex = new object();
+        IChannelListener<IDuplexSessionChannel> listener;
+        CustomBinding listenerBinding;
+        static readonly string ExceptionMessageListenerHasNotBeenStarted = "Listener has not been started";
+        static readonly string ExceptionMessageListenerHasAlreadyBeenStarted = "Listener has not been started";
 
-        public RelayListener(string address, string token, RelayAddressType relayAddressType)
+        public RelayListener(string address, TokenProvider tokenProvider, RelayAddressType relayAddressType)
         {
             this.address = address;
             this.relayAddressType = relayAddressType;
-            this.tokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(token);
+            this.tokenProvider = tokenProvider;
         }
-
-        public RelayListener(string address, string sasRuleName, string sasRuleKey)
-        {
-            this.address = address;
-            this.tokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(sasRuleName, sasRuleKey);
-        }
-
+        
         public async Task StartAsync()
         {
-            var tcpRelayTransportBindingElement = new TcpRelayTransportBindingElement(RelayClientAuthenticationType.RelayAccessToken)
+            if (listener != null)
             {
-                ConnectionMode = TcpRelayConnectionMode.Relayed,
-                IsDynamic = (relayAddressType == RelayAddressType.Dynamic)
-            };
-            tcpRelayTransportBindingElement.GetType().GetProperty("TransportProtectionEnabled", BindingFlags.GetProperty|BindingFlags.Instance|BindingFlags.NonPublic).SetValue(tcpRelayTransportBindingElement, true);
+                throw new InvalidOperationException(ExceptionMessageListenerHasAlreadyBeenStarted);
+            }
 
-            var tb = new TransportClientEndpointBehavior(tokenProvider);
-            var rt = new CustomBinding(
-                new BinaryMessageEncodingBindingElement(),
-                tcpRelayTransportBindingElement);
-            
-            
-            listener = rt.BuildChannelListener<IDuplexSessionChannel>(new Uri(address),tb);
-            await Task.Factory.FromAsync(listener.BeginOpen, listener.EndOpen, null);
+            try
+            {
+                var tcpRelayTransportBindingElement =
+                    new TcpRelayTransportBindingElement(RelayClientAuthenticationType.RelayAccessToken)
+                    {
+                        TransferMode = TransferMode.Buffered,
+                        ConnectionMode = TcpRelayConnectionMode.Relayed,
+                        IsDynamic = (relayAddressType == RelayAddressType.Dynamic)
+                    };
+                tcpRelayTransportBindingElement.GetType()
+                    .GetProperty("TransportProtectionEnabled",
+                        BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(tcpRelayTransportBindingElement, true);
+
+                var tb = new TransportClientEndpointBehavior(tokenProvider);
+                this.listenerBinding = new CustomBinding(
+                    new BinaryMessageEncodingBindingElement(),
+                    tcpRelayTransportBindingElement);
+                
+                listener = listenerBinding.BuildChannelListener<IDuplexSessionChannel>(new Uri(address), tb);
+                await Task.Factory.FromAsync(listener.BeginOpen, listener.EndOpen, null);
+            }
+            catch
+            {
+                listener = null;
+                throw;
+            }
         }
 
         public void Stop()
         {
+            if (listener == null)
+            {
+                throw new InvalidOperationException(ExceptionMessageListenerHasNotBeenStarted);
+            }
+
             listener.Close();
+            listener = null;
         }
 
         public async Task<RelayConnection> AcceptConnectionAsync(TimeSpan timeout)
         {
             if (listener == null)
             {
-                await StartAsync();
+                throw new InvalidOperationException(ExceptionMessageListenerHasNotBeenStarted);
             }
             var duplexSessionChannel = await Task.Factory.FromAsync(listener.BeginAcceptChannel,
-                (Func<IAsyncResult, IDuplexSessionChannel>) listener.EndAcceptChannel, 
+                (Func<IAsyncResult, IDuplexSessionChannel>)listener.EndAcceptChannel,
                 timeout, null);
             await Task.Factory.FromAsync(duplexSessionChannel.BeginOpen, duplexSessionChannel.EndOpen, null);
-            return new RelayConnection(duplexSessionChannel);
+            return new RelayConnection(duplexSessionChannel)
+            {
+                WriteTimeout = (int)listenerBinding.SendTimeout.TotalMilliseconds,
+                ReadTimeout = (int)listenerBinding.ReceiveTimeout.TotalMilliseconds
+            };
         }
 
         public RelayConnection AcceptConnection(TimeSpan timeout)
         {
             return AcceptConnectionAsync(timeout).GetAwaiter().GetResult();
+        }
+
+        public void Dispose()
+        {
+            if (listener != null)
+            {
+                this.Stop();
+            }
         }
     }
 }

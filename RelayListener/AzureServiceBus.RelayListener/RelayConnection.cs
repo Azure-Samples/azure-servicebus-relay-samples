@@ -1,27 +1,63 @@
+//  
+//  Copyright © Microsoft Corporation, All Rights Reserved
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License"); 
+//  you may not use this file except in compliance with the License. 
+//  You may obtain a copy of the License at
+// 
+//  http://www.apache.org/licenses/LICENSE-2.0 
+// 
+//  THIS CODE IS PROVIDED *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS
+//  OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
+//  ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A
+//  PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
+// 
+//  See the Apache License, Version 2.0 for the specific language
+//  governing permissions and limitations under the License. 
+
 namespace AzureServiceBus.RelayListener
 {
     using System;
     using System.IO;
+    using System.ServiceModel;
     using System.ServiceModel.Channels;
     using System.Threading;
     using System.Threading.Tasks;
-    using Microsoft.ServiceBus;
     using Microsoft.ServiceBus.Web;
 
-    public class RelayConnection : Stream
+    public sealed class RelayConnection : Stream, IDisposable
     {
         readonly IDuplexSessionChannel channel;
-        Stream pendingReaderStream = null;
-        SemaphoreSlim readerSemaphore = new SemaphoreSlim(1);
+        readonly SemaphoreSlim readerSemaphore = new SemaphoreSlim(1);
+        Stream pendingReaderStream;
 
         public RelayConnection(IDuplexSessionChannel channel)
         {
             this.channel = channel;
+            this.WriteTimeout = this.ReadTimeout = 60*1000; // 60s default
+        }
+
+        public override bool CanTimeout => true;
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => true;
+
+        public override int WriteTimeout { get; set; }
+        public override int ReadTimeout { get; set; }
+
+        public override long Length
+        {
+            get { throw new NotSupportedException(); }
+        }
+
+        public override long Position
+        {
+            get { throw new NotSupportedException(); }
+            set { throw new NotSupportedException(); }
         }
 
         public override void Flush()
         {
-
         }
 
         public override long Seek(long offset, SeekOrigin origin)
@@ -36,7 +72,7 @@ namespace AzureServiceBus.RelayListener
 
         public override void Close()
         {
-            this.Shutdown();
+            Shutdown();
             base.Close();
         }
 
@@ -47,8 +83,13 @@ namespace AzureServiceBus.RelayListener
 
         public Task ShutdownAsync()
         {
-            var msg = Message.CreateMessage(MessageVersion.Default, "eof");
-            return Task.Factory.FromAsync(this.channel.BeginSend, this.channel.EndSend, msg, null);
+            if (channel.State == CommunicationState.Opened)
+            {
+                var msg = Message.CreateMessage(MessageVersion.Default, "eof");
+                return Task.Factory.FromAsync(channel.BeginSend, channel.EndSend, msg,
+                    TimeSpan.FromMilliseconds(WriteTimeout), null);
+            }
+            return Task.FromResult(true);
         }
 
         public override int Read(byte[] buffer, int offset, int count)
@@ -63,30 +104,64 @@ namespace AzureServiceBus.RelayListener
 
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            var msg = StreamMessageHelper.CreateMessage(MessageVersion.Default, string.Empty, new MemoryStream(buffer, offset, count));
-            return Task.Factory.FromAsync(this.channel.BeginSend, this.channel.EndSend, msg, null);
+            if (channel.State != CommunicationState.Opened)
+            {
+                throw new InvalidOperationException();
+            }
+
+            // local cancellation source dependent on outer token that nukes the channel 
+            // on abort. That renders the channel unusable for further operations while a 
+            // timeout expiry might not.
+            using (var ct = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+            {
+                ct.Token.Register(() => channel.Abort());
+                // create and send message
+                var msg = StreamMessageHelper.CreateMessage(MessageVersion.Default, string.Empty,
+                    new MemoryStream(buffer, offset, count));
+                return Task.Factory.FromAsync(channel.BeginSend, channel.EndSend, msg,
+                    TimeSpan.FromMilliseconds(WriteTimeout), null);
+            }
         }
 
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count,
             CancellationToken cancellationToken)
         {
+            if (channel.State != CommunicationState.Opened)
+            {
+                throw new InvalidOperationException();
+            }
+            
             await readerSemaphore.WaitAsync(cancellationToken);
 
             try
             {
-                do
+                while (!cancellationToken.IsCancellationRequested)
                 {
                     if (pendingReaderStream == null)
                     {
-                        var msg = await Task.Factory.FromAsync(channel.BeginReceive, (Func<IAsyncResult, Message>)channel.EndReceive, TimeSpan.MaxValue, null);
-                        if (!msg.IsEmpty && msg.Headers.Action != "eof")
+                        // local cancellation source dependent on outer token that nukes the channel 
+                        // on abort. That renders the channel unusable for further operations while a 
+                        // timeout expiry might not.
+                        using (var ct = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
                         {
-                            pendingReaderStream = StreamMessageHelper.GetStream(msg);
+                            ct.Token.Register(() => channel.Abort());
+                            
+                            // read from the channel
+                            var msg = await Task.Factory.FromAsync(channel.BeginReceive,
+                                (Func<IAsyncResult, Message>) channel.EndReceive,
+                                TimeSpan.FromMilliseconds(ReadTimeout), null);
+                            if (!msg.IsEmpty && msg.Headers.Action != "eof")
+                            {
+                                pendingReaderStream = StreamMessageHelper.GetStream(msg);
+                            }
                         }
                     }
                     if (pendingReaderStream != null)
                     {
-                        int bytesRead = await pendingReaderStream.ReadAsync(buffer, offset, count, cancellationToken);
+                        var bytesRead = await pendingReaderStream.ReadAsync(buffer, offset, count,
+                            CancellationTokenSource.CreateLinkedTokenSource(
+                                new CancellationTokenSource(TimeSpan.FromMilliseconds(ReadTimeout)).Token,
+                                cancellationToken).Token);
                         if (bytesRead == 0)
                         {
                             pendingReaderStream = null;
@@ -95,34 +170,19 @@ namespace AzureServiceBus.RelayListener
                         return bytesRead;
                     }
                     return 0;
-                } while (true);
+                }
+                throw new OperationCanceledException(cancellationToken);
             }
             finally
             {
                 readerSemaphore.Release();
             }
         }
-
-
-        public override bool CanRead => true;
-        public override bool CanSeek => false;
-        public override bool CanWrite => true;
-        public override long Length
-        {
-            get { throw new NotSupportedException(); }
-        }
-        public override long Position
-        {
-            get { throw new NotSupportedException(); }
-            set { throw new NotSupportedException(); }
-        }
-
     }
-    
+
     public enum RelayAddressType
     {
-        Configured, Dynamic
+        Configured,
+        Dynamic
     }
-
-
 }
