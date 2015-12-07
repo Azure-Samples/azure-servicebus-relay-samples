@@ -173,7 +173,7 @@ namespace RelaySamples
                         "samplelisten",
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(httpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
-                ((IHttpListenerSample) program).Run(httpUri, token).GetAwaiter().GetResult();
+                ((IHttpListenerSample)program).Run(httpUri, token).GetAwaiter().GetResult();
             }
             else if (program is IHttpSenderSample)
             {
@@ -182,7 +182,7 @@ namespace RelaySamples
                         "samplesend",
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(httpUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
-                ((IHttpSenderSample) program).Run(httpUri, token).GetAwaiter().GetResult();
+                ((IHttpSenderSample)program).Run(httpUri, token).GetAwaiter().GetResult();
             }
             else if (program is IDynamicSenderSample)
             {
@@ -191,7 +191,7 @@ namespace RelaySamples
                         "rootsamplesend",
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(rootUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
-                ((IDynamicSenderSample) program).Run(hostName, token).GetAwaiter().GetResult();
+                ((IDynamicSenderSample)program).Run(hostName, token).GetAwaiter().GetResult();
             }
             else if (program is IDynamicListenerSample)
             {
@@ -200,7 +200,7 @@ namespace RelaySamples
                         "rootsamplelisten",
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(rootUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
-                ((IDynamicListenerSample) program).Run(hostName, token).GetAwaiter().GetResult();
+                ((IDynamicListenerSample)program).Run(hostName, token).GetAwaiter().GetResult();
             }
             else if (program is IDynamicSample)
             {
@@ -209,7 +209,16 @@ namespace RelaySamples
                         "rootsamplemanage",
                         properties[servicebusManageKey])
                         .GetWebTokenAsync(rootUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
-                ((IDynamicSample) program).Run(hostName, token).GetAwaiter().GetResult();
+                ((IDynamicSample)program).Run(hostName, token).GetAwaiter().GetResult();
+            }
+            else if (program is IConnectionStringSample)
+            {
+                var connectionString =
+                    ServiceBusConnectionStringBuilder.CreateUsingSharedAccessKey(
+                        new Uri(rootUri), "rootsamplemanage",
+                        properties[servicebusManageKey]);
+
+                ((IConnectionStringSample)program).Run(connectionString).GetAwaiter().GetResult();
             }
         }
     }
@@ -267,5 +276,10 @@ namespace RelaySamples
     interface IDynamicSample
     {
         Task Run(string serviceBusHostName, string token);
+    }
+
+    interface IConnectionStringSample
+    {
+        Task Run(string connectionString);
     }
 }
