@@ -1,22 +1,28 @@
 #Azure Service Bus Relay Samples
 
-This repository contains the official set of samples for the Azure Service Bus Relay service. Fork and play. 
+This repository contains the official set of samples for the Azure Service Bus Relay service. 
 
-The *Azure Service Bus Relay* allows creating secured, publicly discoverable and reachable endpoints for 
+Fork and play!
+
+The *Azure Service Bus Relay* is a service that helps creating secured, publicly discoverable and reachable endpoints for 
 privately hosted services that reside behind network address translation boundaries and/or are shielded by
-firewalls. In other words, you can host a publicly accessible service endpoint from any Windows computer 
-that can connect to the Internet. The Relay automatically tunnels through proxies, and will automatically 
+firewalls. 
+
+In other words, you can host a publicly accessible service endpoint from nearly any Windows computer 
+that can connect to the Internet. 
+
+The Relay service client automatically tunnels through proxies, and will automatically 
 leverage the [WebSocket protocol](https://tools.ietf.org/html/rfc6455) when and if required.  
 
 The Relay offers two protocol options:
 * **HTTP** - HTTP services are the most interoperable option and allow accessing such relayed services from
     any platform. HTTP services can be plain REST-style services, or can use the full range of SOAP/WS-* 
 	capabilities of WCF, including message-level end-to-end message protection and authentication.   
-* **TCP** - TCP (or "NetTcp") services use a .NET specific, bi-directional, connection-oriented protocol
+* **TCP** - TCP (or "net.tcp") services use a .NET specific, bi-directional, connection-oriented protocol
     that is significantly more efficient than HTTP, and specifically so with the Azure Service Bus Relay. Unless
 	interoperability with non-.NET clients is an immediate concern, applications should prefer this option.
 	It's possible to host multiple concurrent endpoints for the same service to provide an optimal choice for
-	.NET clients and other clients at the same time, which is demonstrated in the* RelayDualEndpoint* sample.   
+	.NET clients and other clients at the same time.   
 
 The ability to create listeners is currently limited to clients running the full .NET Framework (4.5+) on 
 supported Windows client (Windows 7+) and Windows Server (Windows Server 2012+) operating systems since
@@ -65,13 +71,23 @@ rather than a connection string or a raw SAS key. The security model design of S
 rather than keys, because tokens can be constrained to a particular scope and can be issued to expire at a certain time. 
 More about SAS and tokens can be found [here](https://azure.microsoft.com/documentation/articles/service-bus-shared-access-signature-authentication/).               
 
-##TCP Samples
+##TCP Introduction Samples
 
-* **RelayTCP** - The [RelayTcp](RelayTcp) sample shows how create a TCP listener, how to securely connect to it from a client, and how to pass messages. 
+* **RelayTcp** - The [RelayTcp](RelayTcp) sample shows how create a TCP listener, how to securely connect to it from a client, and how to pass messages. 
 The sample also demonstrates the inherent load balancing capabilities of Service Bus.   
-* **RelayTCPStream** - The [RelayTcpStream](RelayTcpStream) sample shows how to wrap any System.IO.Stream with a service endpoint, 
-how to create a System.IO.Stream proxy on teh client side, and how to run an end-to-end streamed communication link through the Relay.
-     
+* **RelayListener** - The [RelayListener](RelayListener) sample provides a simple stream abstraction for the Relay, echoing the System.Net.TcpListener/TcpClient classes
+from the .NET framework. No WCF experience required. 
+
+##Other TCP Samples
+* **RelayTcpStream** - The [RelayTcpStream](RelayTcpStream) sample shows how to wrap any System.IO.Stream with a service endpoint, 
+how to create a System.IO.Stream proxy on the client side, and how to run an end-to-end streamed communication link through the Relay.
+* **RelayTcpHybrid** - The [RelayTcpHybrid](RelayTcpHybrid) sample shows how to use the Hybrid connection mode, which starts with a connection through the
+Relay and upgrades the connection in-flight to a direct NAT traversal connection or local network connection as applicable to reduce latency.
+* **RelayTcpMessageLevelSecurity** - The [RelayTcpMessageLevelSecurity](RelayTcpMessageLevelSecurity) sample illustrates how to use WCF's message
+security capabilities for end-to-end protection of a message path through the Relay, which end-to-end payload-level encryption.
+* **RelayListenerThrift** - The [RelayListenerThrift](RelayListenerThrift) sample is a variation of the standard Apache Thrift C# RPC sample 
+overlaid over the bi-directional streaming provided by the [RelayListener](RelayListener)
+  
 
 ##HTTP Samples
 * **RelayHttp** - The [RelayHttp](RelayHttp) sample shows how to create a plain HTTP listener, and how to securely connect to it using 
@@ -81,8 +97,14 @@ sample set.
 the Service Bus Relay has been turned off and that allows unauthenticated requests to pass through the Relay. This enables any client, including
 browser clients, to transparently interact with the HTTP service without having to present a Relay access token.
 
-##General Samples
-* **ConnectivityOptions** - This sample illustrates how to force HTTPS and WebSocket connectivity in tightly managed network environments 
-where the automatic detection of conjnectivity modes may fail.
-* **ProxyAuth** - This sample illustrates how to configure proxy authentication         
+##WCF SOAP Web Services Samples
+* **RelayWSHttpSimple** - The [RelayWSHttpSimple](RelayWSHttpSimple) sample shows a WCF HTTP Web Service exposed through the Relay
+* **RelayWSMetadataExchange** - The [RelayWSMetadataExchange](RelayWSMetadataExchange) sample shows how to expose MEX endpoints through the Relay
 
+##General Samples
+[TBD]  **ConnectivityOptions** - This sample illustrates how to force HTTPS and WebSocket connectivity in tightly managed network environments 
+where the automatic detection of conjnectivity modes may fail.
+
+[TBD]  **ProxyAuth** - This sample illustrates how to configure proxy authentication         
+
+[TBD]  **HostRecovery**
