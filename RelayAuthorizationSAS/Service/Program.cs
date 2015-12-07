@@ -1,72 +1,60 @@
-//---------------------------------------------------------------------------------
-// Microsoft (R)  Windows Azure SDK
-// Software Development Kit
+//   
+//   Copyright © Microsoft Corporation, All Rights Reserved
 // 
-// Copyright (c) Microsoft Corporation. All rights reserved.  
-//
-// THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, 
-// EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
-// OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
-//---------------------------------------------------------------------------------
+//   Licensed under the Apache License, Version 2.0 (the "License"); 
+//   you may not use this file except in compliance with the License. 
+//   You may obtain a copy of the License at
+// 
+//   http://www.apache.org/licenses/LICENSE-2.0 
+// 
+//   THIS CODE IS PROVIDED *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS
+//   OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
+//   ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A
+//   PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
+// 
+//   See the Apache License, Version 2.0 for the specific language
+//   governing permissions and limitations under the License. 
 
 namespace RelaySamples
 {
-
     using System;
-    using System.Security.Cryptography;
     using System.ServiceModel;
-    using System.Text;
-    using System.Web;
+    using System.Threading.Tasks;
     using Microsoft.ServiceBus;
 
-    class Program
+    // This is an all-in-one Relay service that can be hosted through the 
+    // Service Bus Relay. 
+    [ServiceContract(Namespace = "", Name = "echo"),
+     ServiceBehavior(InstanceContextMode = InstanceContextMode.Single)]
+    class Program : ITcpListenerSampleUsingKeys
     {
-        static void Main(string[] args)
+        public async Task Run(string listenAddress, string listenKeyName, string listenKeyValue)
         {
-            Console.Write("Your Service Namespace: ");
-            string serviceNamespace = Console.ReadLine();
-
-            Console.Write("Your Issuer Name: ");
-            string issuerName = Console.ReadLine();
-
-            Console.Write("Your Issuer Secret: ");
-            string issuerSecret = Console.ReadLine();
-
-            Uri address = ServiceBusEnvironment.CreateServiceUri("sb", serviceNamespace, "SimpleWebTokenAuthenticationService");
-
-            TransportClientEndpointBehavior behavior = new TransportClientEndpointBehavior();
-            behavior.TokenProvider = TokenProvider.CreateSimpleWebTokenProvider(
-                ComputeSimpleWebTokenString(issuerName, issuerSecret));
-
-            ServiceHost host = new ServiceHost(typeof(EchoService), address);
-            host.Description.Endpoints[0].Behaviors.Add(behavior);
-            host.Open();
-
-            Console.WriteLine("Service address: " + address);
-            Console.WriteLine("Press [Enter] to exit");
-            Console.ReadLine();
-
-            host.Close();
-        }
-
-        // Returns the string in the following format: Issuer=...&HMACSHA256=...
-        static string ComputeSimpleWebTokenString(string issuerName, string issuerSecret)
-        {
-            string issuer = string.Format("{0}={1}", TokenConstants.TokenIssuer, HttpUtility.UrlEncode(issuerName));
-            string signature = null;
-
-            // Compute the signature
-            using (HMACSHA256 sha256 = new HMACSHA256(Convert.FromBase64String(issuerSecret)))
+            using (ServiceHost host = new ServiceHost(this))
             {
-                signature = Convert.ToBase64String(sha256.ComputeHash(Encoding.UTF8.GetBytes(issuer)));
+                host.AddServiceEndpoint(
+                    GetType(),
+                    new NetTcpRelayBinding {IsDynamic = false},
+                    listenAddress)
+                    .EndpointBehaviors.Add(
+                        new TransportClientEndpointBehavior(
+                            TokenProvider.CreateSharedAccessSignatureTokenProvider(listenKeyName, listenKeyValue)));
+
+                host.Open();
+                Console.WriteLine("Service listening at address {0}", listenAddress);
+                Console.WriteLine("Press [Enter] to close the listener and exit.");
+                Console.ReadLine();
+                host.Close();
             }
-
-            StringBuilder sb = new StringBuilder();
-            sb.Append(issuer);
-            sb.Append(TokenConstants.UrlParameterSeparator);
-            sb.Append(string.Format("{0}={1}", TokenConstants.TokenDigest256, HttpUtility.UrlEncode(signature)));
-
-            return sb.ToString();
         }
+
+        [OperationContract]
+        async Task<string> Echo(string input)
+        {
+            Console.WriteLine("\tCall received with input \"{0}\"", input);
+            return input;
+        }
+
+        
     }
 }

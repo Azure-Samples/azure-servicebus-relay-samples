@@ -5,14 +5,12 @@ VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{62B340B1-3FE5-4A46-8296-0DF777EE6E28}"
 	ProjectSection(SolutionItems) = preProject
-		Readme.htm = Readme.htm
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Service", "Service\Service.csproj", "{27CF1BE6-0280-46F8-BB19-BC7147E02B6A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csproj", "{3BFACE4B-B4A5-42FC-A029-62F42B3B82B8}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NewFolder1", "NewFolder1", "{B45BC14D-8D7F-4588-A6A0-40504BFE840B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

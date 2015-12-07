@@ -1,85 +1,60 @@
-//---------------------------------------------------------------------------------
-// Microsoft (R)  Windows Azure SDK
-// Software Development Kit
+//   
+//   Copyright © Microsoft Corporation, All Rights Reserved
 // 
-// Copyright (c) Microsoft Corporation. All rights reserved.  
-//
-// THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, 
-// EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
-// OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
-//---------------------------------------------------------------------------------
+//   Licensed under the Apache License, Version 2.0 (the "License"); 
+//   you may not use this file except in compliance with the License. 
+//   You may obtain a copy of the License at
+// 
+//   http://www.apache.org/licenses/LICENSE-2.0 
+// 
+//   THIS CODE IS PROVIDED *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS
+//   OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
+//   ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A
+//   PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
+// 
+//   See the Apache License, Version 2.0 for the specific language
+//   governing permissions and limitations under the License. 
 
 namespace RelaySamples
 {
     using System;
-    using System.Security.Cryptography;
     using System.ServiceModel;
-    using System.Text;
-    using System.Web;
+    using System.Threading.Tasks;
     using Microsoft.ServiceBus;
 
-    class Program
+    class Program : ITcpSenderSampleUsingKeys
     {
-        static void Main(string[] args)
+        public async Task Run(string sendAddress, string sendKeyName, string sendKeyValue)
         {
-            Console.Write("Your Service Namespace: ");
-            string serviceNamespace = Console.ReadLine();
+            var cf = new ChannelFactory<IClient>(
+                new NetTcpRelayBinding {IsDynamic = false},
+                sendAddress);
 
-            Console.Write("Your Issuer Name: ");
-            string issuerName = Console.ReadLine();
+            cf.Endpoint.EndpointBehaviors.Add(
+                new TransportClientEndpointBehavior(
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider(sendKeyName, sendKeyValue)));
 
-            Console.Write("Your Issuer Secret: ");
-            string issuerSecret = Console.ReadLine();
-
-            Uri serviceUri = ServiceBusEnvironment.CreateServiceUri("sb", serviceNamespace, "SimpleWebTokenAuthenticationService");
-
-            TransportClientEndpointBehavior behavior = new TransportClientEndpointBehavior();
-            behavior.TokenProvider = TokenProvider.CreateSimpleWebTokenProvider(
-                ComputeSimpleWebTokenString(issuerName, issuerSecret));
-
-            ChannelFactory<IEchoChannel> channelFactory = new ChannelFactory<IEchoChannel>("RelayEndpoint", new EndpointAddress(serviceUri));
-            channelFactory.Endpoint.Behaviors.Add(behavior);
-
-            IEchoChannel channel = channelFactory.CreateChannel();
-            channel.Open();
-
-            Console.WriteLine("Enter text to echo (or [Enter] to exit):");
-            string input = Console.ReadLine();
-            while (input != String.Empty)
+            using (var client = cf.CreateChannel())
             {
-                try
+                for (int i = 1; i <= 25; i++)
                 {
-                    Console.WriteLine("Server echoed: {0}", channel.Echo(input));
+                    var result = await client.Echo(DateTime.UtcNow.ToString());
+                    Console.WriteLine("Round {0}, Echo: {1}", i, result);
                 }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Error: " + e.Message);
-                }
-                input = Console.ReadLine();
+                client.Close();
             }
 
-            channel.Close();
-            channelFactory.Close();
+            Console.WriteLine("Press [Enter] to exit.");
+            Console.ReadLine();
         }
 
-        // Returns the string in the following format: Issuer=...&HMACSHA256=...
-        static string ComputeSimpleWebTokenString(string issuerName, string issuerSecret)
+        [ServiceContract(Namespace = "", Name = "echo")]
+        interface IClient : IClientChannel
         {
-            string issuer = string.Format("{0}={1}", TokenConstants.TokenIssuer, HttpUtility.UrlEncode(issuerName));
-            string signature = null;
-
-            // Compute the signature
-            using (HMACSHA256 sha256 = new HMACSHA256(Convert.FromBase64String(issuerSecret)))
-            {
-                signature = Convert.ToBase64String(sha256.ComputeHash(Encoding.UTF8.GetBytes(issuer)));
-            }
-
-            StringBuilder sb = new StringBuilder();
-            sb.Append(issuer);
-            sb.Append(TokenConstants.UrlParameterSeparator);
-            sb.Append(string.Format("{0}={1}", TokenConstants.TokenDigest256, HttpUtility.UrlEncode(signature)));
-
-            return sb.ToString();
+            [OperationContract]
+            Task<string> Echo(string input);
         }
+
+        
     }
 }
