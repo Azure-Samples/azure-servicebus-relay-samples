@@ -118,6 +118,7 @@ namespace AzureServiceBus.RelayListener
                 // create and send message
                 var msg = StreamMessageHelper.CreateMessage(MessageVersion.Default, string.Empty,
                     new MemoryStream(buffer, offset, count));
+                msg.Headers.Action = null;
                 return Task.Factory.FromAsync(channel.BeginSend, channel.EndSend, msg,
                     TimeSpan.FromMilliseconds(WriteTimeout), null);
             }

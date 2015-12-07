@@ -41,7 +41,8 @@ namespace AzureServiceBus.RelayListener
                 RelayClientAuthenticationType.RelayAccessToken)
             {
                 TransferMode = TransferMode.Buffered,
-                ConnectionMode = TcpRelayConnectionMode.Relayed
+                ConnectionMode = TcpRelayConnectionMode.Relayed,
+                ManualAddressing = true
             };
             bindingElement.GetType()
                 .GetProperty("TransportProtectionEnabled",

@@ -56,7 +56,8 @@ namespace AzureServiceBus.RelayListener
                     {
                         TransferMode = TransferMode.Buffered,
                         ConnectionMode = TcpRelayConnectionMode.Relayed,
-                        IsDynamic = (relayAddressType == RelayAddressType.Dynamic)
+                        IsDynamic = (relayAddressType == RelayAddressType.Dynamic),
+                        ManualAddressing = true
                     };
                 tcpRelayTransportBindingElement.GetType()
                     .GetProperty("TransportProtectionEnabled",
