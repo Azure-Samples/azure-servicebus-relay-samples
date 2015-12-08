@@ -16,6 +16,9 @@ if(-not $?)
 # End - Initialization - Invocation, Logging etc
 ###########################################################
 
+
+& "$scriptDir\scripts\prepare.ps1"
+
 $buildList=@()
 $buildErrorList=@()
 
@@ -59,4 +62,3 @@ else
     $buildList | % { Write-SpecialLog $_  (Get-ScriptName) (Get-ScriptLineNumber) }
 }
 
-& "$scriptDir\scripts\prepare.ps1"

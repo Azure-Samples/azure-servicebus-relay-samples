@@ -9,8 +9,8 @@ Param(
 ###########################################################
 # Start - Initialization - Invocation, Logging etc
 ###########################################################
-#$VerbosePreference = "SilentlyContinue"
-#$ErrorActionPreference = "Stop"
+$VerbosePreference = "SilentlyContinue"
+$ErrorActionPreference = "Stop"
 
 $scriptPath = $MyInvocation.MyCommand.Path
 $scriptDir = Split-Path $scriptPath

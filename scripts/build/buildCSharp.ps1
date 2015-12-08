@@ -33,7 +33,7 @@ $csharpProjects | % {
     try
     {
        nuget-restore -verbosity detailed $projectName
-       msbuild.exe /m /fl /flp:"Verbosity=Detailed" /clp:verbosity="Minimal;Summary" /t:"Clean;Build" /p:configuration="Debug" 
+       msbuild.exe /m /fl /flp:"Verbosity=Detailed" /clp:verbosity="Minimal;Summary" /t:"Clean;Build" /p:configuration="Debug" $projectName
        if($LASTEXITCODE -ne 0) { $buildErrorList += $projectName } else { $buildList += $projectName };
     }
     catch [System.Management.Automation.CommandNotFoundException]

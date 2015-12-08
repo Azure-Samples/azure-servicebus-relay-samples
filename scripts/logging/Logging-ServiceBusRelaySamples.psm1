@@ -32,7 +32,7 @@ function Get-ScriptLineNumber()
 
 function Format-LogMessage([string] $level, [string] $msg, [string] $scriptName = $null, [string] $scriptLineNumber = $null, [object] $pipelineObject = $null)
 {
-    $msg = ("{0} [{1}] [{3}(ln:{4})] - {2}" -f [System.DateTime]::Now.ToString("o"), $level, $msg, $scriptName, $scriptLineNumber)
+    $msg = ("{0} [{1}] [{3}(ln:{4})] - {2}" -f [System.DateTime]::Now.ToString("T"), $level, $msg, $scriptName, $scriptLineNumber)
     if($pipelineObject -ne $null)
     {
         $msg += "`r`n" + $($pipelineObject | Out-String)
