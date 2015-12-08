@@ -27,19 +27,20 @@ namespace RelaySamples
     using Microsoft.ServiceBus;
 
     [ServiceContract]
-    class Program : IHttpListenerSample
+    class Program : IDynamicListenerSample
     {
         static readonly Image SampleImage = System.Drawing.Image.FromFile("image.jpg");
 
-        public async Task Run(string httpAddress, string listenToken)
+        public async Task Run(string hostName, string listenToken)
         {
+            string httpAddress = new UriBuilder("http", hostName, -1, "svc").ToString();
             using (var host = new WebServiceHost(GetType()))
             {
                 host.AddServiceEndpoint(
                     GetType(),
                     new WebHttpRelayBinding(
                         EndToEndWebHttpSecurityMode.None,
-                        RelayClientAuthenticationType.None) {IsDynamic = false},
+                        RelayClientAuthenticationType.None) {IsDynamic = true},
                     httpAddress)
                     .EndpointBehaviors.Add(
                         new TransportClientEndpointBehavior(

@@ -118,5 +118,5 @@ stream and the network channel, the read operation is guarded by a semaphore.
 ##Running the sample
 
 You can run the client from Visual Studio or on the command line from the sample's root directory by starting <code>client/bin/debug/client.exe</code>. You
-must run the service from Visual Studio or the command line, preferably with <code>start server/bin/debug/server.exe</code> into a separate, parallel command window, and the service must report itself as listening
-before you can start the client.
+must run the service from Visual Studio or the command line, preferably with <code>start server/bin/debug/server.exe</code> into a separate, parallel command 
+window, and the server must report itself as listening before you can start the client.

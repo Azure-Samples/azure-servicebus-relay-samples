@@ -1,47 +1,4 @@
-﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML dir=ltr XMLNS:MSHelp = "http://msdn.microsoft.com/mshelp" xmlns:ddue = 
-"http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink = 
-"http://www.w3.org/1999/xlink" xmlns:tool = "http://www.microsoft.com/tooltip" 
-XMLNS:[default] http://ddue.schemas.microsoft.com/authoring/2003/5 = 
-"http://ddue.schemas.microsoft.com/authoring/2003/5"><HEAD><TITLE>MsgSecUserName Sample</TITLE>
-<META content="text/html; CHARSET=utf-8" http-equiv=Content-Type></META>
-<META name=save content=history></META><LINK rel=stylesheet type=text/css 
-href="../../../../../CommonFiles/Classic.css"></LINK>
-
-<META name=GENERATOR content="MSHTML 8.00.6001.18783">
-<style type="text/css">
-.style1 {
-				font-family: monospace;
-				font-size: 100%;
-				color: #000000;
-}
-</style>
-</HEAD>
-<BODY><INPUT id=userDataCache class=userDataStyle type=hidden></INPUT><INPUT 
-id=hiddenScrollOffset type=hidden></INPUT><IMG 
-style="WIDTH: 0px; DISPLAY: none; HEIGHT: 0px" id=dropDownImage 
-src="../../../../../../Common/Html/drpdown.gif"></IMG><IMG 
-style="WIDTH: 0px; DISPLAY: none; HEIGHT: 0px" id=dropDownHoverImage 
-src="../../../../../../Common/Html/drpdown_orange.gif"></IMG><IMG 
-style="WIDTH: 0px; DISPLAY: none; HEIGHT: 0px" id=copyImage 
-src="../../../../../../Common/Html/copycode.gif"></IMG><IMG 
-style="WIDTH: 0px; DISPLAY: none; HEIGHT: 0px" id=copyHoverImage 
-src="../../../../../../Common/Html/copycodeHighlight.gif"></IMG>
-<DIV id=header>
-<TABLE id=topTable width="100%">
-  <TBODY>
-  <TR id=headerTableRow1>
-    <TD align=left><SPAN id=runningHeaderText></SPAN></TD></TR>
-  <TR id=headerTableRow2>
-    <TD align=left><SPAN id=nsrTitle>MsgSecUserName Sample</SPAN></TD></TR>
-  <TR id=headerTableRow3>
-    <TD></TD></TR></TBODY></TABLE>
-</DIV>
-<DIV id=mainSection>
-<DIV id=mainBody>
-<DIV id=allHistory class=saveHistory onload="loadAll()" 
-onsave="saveAll()"></DIV>
-<P>This sample demonstrates using the <B>NetTcpRelayBinding</B> binding with 
+﻿<P>This sample demonstrates using the <B>NetTcpRelayBinding</B> binding with 
 message security.</P>
 <H2 class=heading>Prerequisites</H2>
 <DIV id=sectionSection0 class=section><content 

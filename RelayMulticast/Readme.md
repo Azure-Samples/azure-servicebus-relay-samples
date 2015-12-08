@@ -1,27 +1,31 @@
-﻿#NetEvent Sample
+﻿#Azure Service Bus Multicast Sample
 
-This sample demonstrates using the **NetEventRelayBinding** binding on the 
-Azure Service Bus. This binding allows multiple applications to listen to events sent 
-to an endpoint; events sent to that endpoint are received by all 
-applications.
+This sample demonstrates using the Relay's **NetEventRelayBinding** for the 
+Azure Service Bus Relay. This binding allows multiple applications to listen to 
+one-way events sent to an endpoint; events sent to that endpoint are received by all 
+applications. it implements a minimal but functional chat room.
 
-##Prerequisites
-If you haven't already done so, read the release notes document that 
-explains how to sign up for a Azure account and how to configure your 
-environment. It also contains important information about the default security 
-settings for your environment that you need to be aware of.
+> **Note**
+> This capability predates the existence of Service Bus' Messaging Topics. It is 
+> generally recommended to prefer Topics and Subscriptions for multicast message 
+> distribution scenarios in new applications. The NetEventRelayBinding is meant 
+> to serve as a plug-in replacement for datagram communication, especially for 
+> applications that use the WCF UdpBinding in Multicast mode, which is unavailable 
+> in Azure. The NetEventRelayBinding is TCP based and has slightly lower latency 
+> than Topics, but is constrained to at most 25 concurrent listeners on a name.  
 
-##Service Contract &amp; Implementation
-This sample implements a chatroom via the project's<CODE> IMulticastContract</CODE> and <CODE>MulticastService</CODE> 
-implementations. <CODE>Hello</CODE> and <CODE>Bye</CODE> are used within the chatroom application to 
-notify participants when a user joins and leaves the chat. <CODE>Chat</CODE> is 
+##Implementation
+This sample's Program class implements a chatroom with the <code>IChat</code> contract. 
+<code>Hello</code> and <code>Bye</code> are used within the chatroom application to 
+notify participants when a user joins and leaves the chat. <code>Chat</code> is 
 called by the application when a user provides a string to contribute to the 
 conversation.
 
-Note that the methods are and must be marked as <CODE>IsOneWay=True</CODE>. 
+Note that the methods are and must be marked as <code>IsOneWay=True</code> for use with
+the *NetEventRelayBinding*
 ```C#
-[ServiceContract(Name = "IMulticastContract", Namespace = "")]
-public interface IMulticastContract
+[ServiceContract(Name = "IChat", Namespace = "")]
+public interface IChat
 {
      [OperationContract(IsOneWay=true)]
      void Hello(string nickName);
@@ -34,188 +38,60 @@ public interface IMulticastContract
 }
 ```
 
-The service implementation is shown below.
+The service implementation of the chat room is trivial and prints the received 
+messages on the console. The "driver" is a simple loop that terminates on a blank line
+
 ```C#
-[ServiceBehavior(Name = "MulticastService", Namespace = "http://samples.microsoft.com/ServiceModel/Relay/")]
-class MulticastService : IMulticastContract
+void RunChat(IChat channel, string chatNickname)
 {
-    void IMulticastContract.Hello(string nickName)
+    Console.WriteLine("\nPress [Enter] to exit\n");
+    channel.Hello(chatNickname);
+
+    string input = Console.ReadLine();
+    while (input != string.Empty)
     {
-        Console.WriteLine("[" + nickName + "] joins");
+        channel.Chat(chatNickname, input);
+        input = Console.ReadLine();
     }
- 
-    void IMulticastContract.Chat(string nickName, string text)
-    {
-        Console.WriteLine("[" + nickName + "] says: " + text);
-    }
- 
-    void IMulticastContract.Bye(string nickName)
-    {
-        Console.WriteLine("[" + nickName + "] leaves");
-    }   
+    channel.Bye(chatNickname);
 }
 ```
-##Configuration
-<DIV id=sectionSection2 class=section><content 
-xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
-<P xmlns="">The service and client endpoints use the **NetEventRelayBinding** 
-binding. 
-<DIV class=code xmlns=""><SPAN codeLanguage="xml">
-<TABLE cellSpacing=0 cellPadding=0 width="100%">
-  <TBODY>
-  <TR>
-    <TH>Xml&nbsp;</TH>
-</TR>
-  <TR>
-    <TD colSpan=2><PRE>&lt;netEventRelayBinding&gt;
-     &lt;binding name="default" /&gt;
-&lt;/netEventRelayBinding&gt; 
-</PRE></TD></TR></TBODY></TABLE></SPAN></DIV>
-<P xmlns="">The endpoints for the service and client are defined in the 
-application configuration file. The client address is a placeholder that is 
-replaced in the application. The following endpoints are defined:
-<DIV class=code xmlns=""><SPAN codeLanguage="xml">
-<TABLE cellSpacing=0 cellPadding=0 width="100%">
-  <TBODY>
-  <TR>
-    <TH>Xml&nbsp;</TH>
-</TR>
-  <TR>
-    <TD colSpan=2><PRE>&lt;service name="Microsoft.ServiceBus.Samples.MulticastService"&gt;
-    &lt;endpoint name="RelayEndpoint"
-              contract="Microsoft.ServiceBus.Samples.IMulticastContract"
-              binding="netEventRelayBinding"
-              bindingConfiguration="default"
-              address="" /&gt;
-&lt;/service&gt;
- 
-&lt;client&gt;
-    &lt;endpoint name="RelayEndpoint"
-              contract="Microsoft.ServiceBus.Samples.IMulticastContract"
-              binding="netTcpRelayBinding"
-              bindingConfiguration="default"
-              address="http://AddressToBeReplacedInCode/" /&gt;
-&lt;/client&gt;</PRE></TD></TR></TBODY></TABLE></SPAN></DIV></content></DIV>
-<H2 class=heading>Application</H2>
-<DIV id=sectionSection3 class=section><content 
-xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
-<P xmlns="">The application begins by obtaining the chat session name, the service 
-namespace, the 
-issuer credentials and a chat nickname (a string used to identify the 
-chatter). The sample constructs the service URI using this information, then 
-opens the service and the client channel to the Service Bus rendezvous endpoint 
-for the chat session. The <CODE>Hello</CODE> method notifies all participating 
-applications of the arrival of a new user. The <CODE>Chat</CODE> method sends all strings as messages to 
-all participating applications until an empty string is provided as input. 
-    At that point the client leaves the chatroom and the <CODE>Bye</CODE> method notifies all participants of the client&#39;s departure.
-<DIV class=code xmlns=""><SPAN codeLanguage="CSharp">
-<TABLE cellSpacing=0 cellPadding=0 width="100%">
-  <TBODY>
-  <TR>
-    <TH>C#&nbsp;</TH>
-</TR>
-  <TR>
-    <TD colSpan=2><PRE class="style2">Console.Write(&quot;What do you want to call your chat session? &quot;);
-string session = Console.ReadLine();
-Console.Write(&quot;Your Service Namespace: &quot;);
-string serviceNamespace = Console.ReadLine();
-Console.Write(&quot;Your Issuer Name: &quot;);
-string issuerName = Console.ReadLine();
-Console.Write(&quot;Your Issuer Secret: &quot;);
-string issuerSecret = Console.ReadLine();
-Console.Write(&quot;Your Chat Nickname: &quot;);
-string chatNickname = Console.ReadLine();</PRE>
-	<PRE>TransportClientEndpointBehavior relayCredentials = new TransportClientEndpointBehavior();
-relayCredentials.TokenProvider = TokenProvider.CreateSharedSecretTokenProvider(issuerName, issuerSecret);    
 
-Uri serviceAddress = ServiceBusEnvironment.CreateServiceUri(&quot;sb&quot;, &quot;ChatRooms&quot;,
-String.Format(CultureInfo.InvariantCulture, &quot;{0}/MulticastService/&quot;, session));
-ServiceHost host = new ServiceHost(typeof(MulticastService), serviceAddress);
-host.Description.Endpoints[0].Behaviors.Add(relayCredentials);
-host.Open();
+The service and client implementation is all in one place, since the chat room client
+is obviously both multicast sender and multicast receiver on the same name.
 
-ChannelFactory&lt;IMulticastChannel&gt; channelFactory = new ChannelFactory&lt;IMulticastChannel&gt;(&quot;RelayEndpoint&quot;, new EndpointAddress(serviceAddress));
-channelFactory.Endpoint.Behaviors.Add(relayCredentials);
-IMulticastChannel channel = channelFactory.CreateChannel();
-channel.Open();
+We make a dynamic service address for each chat room. All clients that use the same address
+will join the same chat room. The SAS rule fed into the token provider must at least grant
+"Send, Listen" permissions on the namespace.
 
-Console.WriteLine(&quot;\nPress [Enter] to exit\n&quot;);
+```C#
+var serviceAddress = new UriBuilder("sb", serviceBusHostName, -1, "/chat/" + session).ToString();
+var netEventRelayBinding = new NetEventRelayBinding();
+var tokenBehavior = new TransportClientEndpointBehavior(TokenProvider.CreateSharedAccessSignatureTokenProvider(token));
 
-channel.Hello(chatNickname);
-
-string input = Console.ReadLine();
-while (input != String.Empty)
+using (var host = new ServiceHost(this))
 {
-   channel.Chat(chatNickname, input);
-   input = Console.ReadLine();
+    host.AddServiceEndpoint(typeof(IChat), netEventRelayBinding, serviceAddress)
+        .EndpointBehaviors.Add(tokenBehavior);
+    host.Open();
+
+    using (var channelFactory = new ChannelFactory<IChat>(netEventRelayBinding, serviceAddress))
+    {
+        channelFactory.Endpoint.Behaviors.Add(tokenBehavior);
+        var channel = channelFactory.CreateChannel();
+
+        this.RunChat(channel, chatNickname);
+
+        channelFactory.Close();
+    }
+    host.Close();
 }
+return Task.FromResult(true);
+}
+```
 
-channel.Bye(chatNickname);
+##Running the sample
 
-channel.Close();
-channelFactory.Close();
-host.Close();
-</PRE></TD></TR></TBODY></TABLE></SPAN></DIV>
-				</content></DIV>
-<H2 class=heading>Building and Running the Sample</H2>
-<DIV id=sectionSection4 class=section><content 
-xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
-<P xmlns="">After building the solution, perform the following steps to run the 
-application:
-<OL class=ordered xmlns="">
-  <LI>From a command prompt, run the application 
-  bin\Debug\MulticastSample.exe.<BR><BR>
-  <LI>From another command prompt, run another instance of the application 
-  bin\Debug\MulticastSample.exe.<BR><BR></LI></OL>
-<P xmlns="">When finished, press ENTER to exit the application.
-<P xmlns="">**Expected Output – Application 1**
-<DIV class=code xmlns=""><SPAN codeLanguage="other">
-<TABLE cellSpacing=0 cellPadding=0 width="100%">
-  <TBODY>
-  <TR>
-    <TD colSpan=2><PRE class="style1">What do you want to call your chat session? &lt;chat-session&gt;
-Your Service Namespace: &lt;service-namespace&gt;
-Your Issuer Name: owner
-Your Issuer Secret: &lt;issuer-secret&gt;
-Your Chat Nickname: &lt;chat-nickname&gt;
-
-Press [Enter] to exit
-
-[jill] joins
-hello
-[jill] says: hello
-[jack] says: hi, how are you?
-[jack] says: who do you think will win the superbowl this year?
-</PRE></TD></TR></TBODY></TABLE></SPAN></DIV>
-<P xmlns="">**Expected Output – Application 2**
-<DIV class=code xmlns=""><SPAN codeLanguage="other">
-<TABLE cellSpacing=0 cellPadding=0 width="100%">
-  <TBODY>
-  <TR>
-    <TD colSpan=2><PRE class="style1">What do you want to call your chat session? &lt;chat-session&gt;
-Your Service Namespace: &lt;service-namespace&gt;
-Your Issuer Name: owner
-Your Issuer Secret: &lt;issuer-secret&gt;
-Your Chat Nickname: &lt;chat-nickname&gt;
-
-Press [Enter] to exit
-
-[jack] joins
-[jill] joins
-[jill] says: hello
-hi, how are you?
-[jack] says: hi, how are you?
-who do you think will win the superbowl this year?
-[jack] says: who do you think will win the superbowl this year?</PRE></TD></TR></TBODY></TABLE></SPAN></DIV></content></DIV><!--[if gte IE 5]><tool:tip 
-avoidmouse="false" element="languageFilterToolTip"></tool:tip><![endif]--></DIV>
-
-    <br /> 
-    <hr /> 
-    Did you find this information useful?
-    <a href="http://go.microsoft.com/fwlink/?LinkID=155664">
-      
-      <linkText>
-        Please send your suggestions and comments about the documentation.
-      </linkText>
-    </a>
-</DIV></BODY></HTML>
+Run the samples multiple times to impersonate multiple users chatting. You can obviously also 
+break the sample out of the shared entry point harness and run it on multiple machines for
+an actual chat session.
