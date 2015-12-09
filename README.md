@@ -42,7 +42,7 @@ Windows version and have a .NET Framework 4.5+ build environment available. [Vis
 explore the samples; the free community edition will work just fine.    
 
 To run the samples, you must perform a few setup steps, including creating and configuring a Service Bus Namespace. 
-For the required [setup.ps1](setup.ps1) and [cleanup.ps1](cleanup.ps1) scripts, you must have Azure Powershell installed 
+For the required [setup.ps1](setup.ps1) and [cleanup.ps1](cleanup.ps1) scripts, **you must have Azure Powershell installed** 
 ([if you don't here's how](https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/)) and 
 run these scripts from the Azure Powershell environment.
 
@@ -74,7 +74,8 @@ More about SAS and tokens can be found [here](https://azure.microsoft.com/docume
 ##TCP Introduction Samples
 
 * **RelayTcp** - The [RelayTcp](RelayTcp) sample shows how create a TCP listener, how to securely connect to it from a client, and how to pass messages. 
-The sample also demonstrates the inherent load balancing capabilities of Service Bus.   
+The sample also demonstrates the inherent load balancing capabilities of Service Bus and illustrates how to force HTTPS and WebSocket connectivity 
+in tightly managed network environments 
 * **RelayListener** - The [RelayListener](RelayListener) sample provides a simple stream abstraction for the Relay, echoing the System.Net.TcpListener/TcpClient classes
 from the .NET framework. No WCF experience required. 
 
@@ -102,9 +103,5 @@ browser clients, to transparently interact with the HTTP service without having 
 * **RelayWSMetadataExchange** - The [RelayWSMetadataExchange](RelayWSMetadataExchange) sample shows how to expose MEX endpoints through the Relay
 
 ##General Samples
-[TBD]  **ConnectivityOptions** - This sample illustrates how to force HTTPS and WebSocket connectivity in tightly managed network environments 
-where the automatic detection of conjnectivity modes may fail.
-
-[TBD]  **ProxyAuth** - This sample illustrates how to configure proxy authentication         
-
-[TBD]  **HostRecovery**
+*  **RelayConnnectionStatus** - The [RelayConnectionStatus](RelayConnectionStatus) sample shows how to monitor the status of a Relay listener 
+when network failures occur, and how to manage opening the listener host should there be no network connectivity at startup time. 
