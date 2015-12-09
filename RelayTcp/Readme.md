@@ -2,7 +2,7 @@
 
 This sample shows how to create and run a simple relayed TCP service with minimal ceremony.
 
-It also demonstrates the Relay's load balancing capabilities.   
+It also demonstrates the Relay's load balancing capabilities as well as the HTTPS Firewall traversal feature.
 
 ## Prerequisites and Setup
 
@@ -42,6 +42,19 @@ that fact in the [ServiceBehavior] attribute.
         {
 ```
 
+The first two lines inside the <code>Run()</code> method illustrates the Firewall traversal mode. The first option,
+setting the connectivity mode to "AutoDetect" is the default and would be in effect even if we omitted this line. 
+The second, commented-out line shows how to alternatively force the HTTPS WebSockets mode for the Relay. The auto-detect
+algorithm will usually spot when the (more efficient) outbound TCP ports 9350-9353 used by the Relay are shut down, but this setting
+provides a reliable override. The setting is global to the appdomain as the network setup will be identical across
+all endpoints. The same two lines are also in the client portion of this sample. The setting does not need be symmetrically
+applied on client and server.
+
+```C#
+            ServiceBusEnvironment.SystemConnectivity.Mode = ConnectivityMode.AutoDetect; // Auto-detect, default
+            //ServiceBusEnvironment.SystemConnectivity.Mode = ConnectivityMode.Https; // HTTPS WebSockets
+```
+
 To set up the service, we create a WCF ServiceHost and pass a reference to this singleton instance. Then we add the service endpoint
 on which we want to listen. The service endpoint uses the *NetTcpRelayBinding*, which is functionally equivalent to the NetTcpBinding in
 WCF, but creates a Relay endpoint instead of listening on the local network. Since the sample setup preconfigures the Relay endpoint 
@@ -64,7 +77,7 @@ This configuration element, in turn, holds a token provider into which we config
                             TokenProvider.CreateSharedAccessSignatureTokenProvider(listenToken)));
 ```
 
-That's already enouhgh to get the service going, so what's left is to open the host and wait for traffic.       
+That's already enough to get the service going, so what's left is to open the host and wait for traffic.       
 
  ```C#               
                 host.Open();

@@ -33,8 +33,9 @@ namespace RelaySamples
             ServiceBusEnvironment.SystemConnectivity.Mode = ConnectivityMode.AutoDetect; // Auto-detect, default
             //ServiceBusEnvironment.SystemConnectivity.Mode = ConnectivityMode.Https; // HTTPS WebSockets
 
-            using (ServiceHost host = new ServiceHost(this))
+            var controller = new RelayServiceHostController(() =>
             {
+                ServiceHost host = new ServiceHost(this);
                 host.AddServiceEndpoint(
                     GetType(),
                     new NetTcpRelayBinding {IsDynamic = false},
@@ -42,13 +43,14 @@ namespace RelaySamples
                     .EndpointBehaviors.Add(
                         new TransportClientEndpointBehavior(
                             TokenProvider.CreateSharedAccessSignatureTokenProvider(listenToken)));
-
-                host.Open();
-                Console.WriteLine("Service listening at address {0}", listenAddress);
-                Console.WriteLine("Press [Enter] to close the listener and exit.");
-                Console.ReadLine();
-                host.Close();
-            }
+                return host;
+            });
+            controller.Open();
+            Console.WriteLine("Service listening at address {0}", listenAddress);
+            Console.WriteLine("Press [Enter] to close the listener and exit.");
+            Console.ReadLine();
+            controller.Close();
+            
         }
 
         [OperationContract]
