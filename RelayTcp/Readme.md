@@ -160,10 +160,6 @@ hold on to the session until the channel is closed. In the loop below we are cal
     }
  ```
  
-You can run the client from Visual Studio or on the command line from the sample's root directory by starting "client/bin/debug/client.exe". You
-must run the service and the service must report itself as listening before you can start the client.
+You can run the client from Visual Studio or on the command line from the sample's root directory by starting "client/bin/debug/client.exe". You must run the service and the service must report itself as listening before you can start the client.
 
-If you run multiple listeners, every client instance will end up being associated with one of the listeners, as the load balancing feature 
-workse at the session level and not at the request level. The next client instance may then get assigned to another service instance.      
- 
- 
+If you run multiple listeners, every client instance will end up being associated with one of the listeners, as the load balancing feature works at the session level and not at the request level. The next client instance may then get assigned to another service instance.
