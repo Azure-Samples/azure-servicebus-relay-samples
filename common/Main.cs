@@ -102,12 +102,13 @@ namespace RelaySamples
             }
 
             // get overrides from the environment
-            foreach (var prop in properties)
+            var keys = new List<string>(properties.Keys);
+            foreach (var key in keys)
             {
-                var env = Environment.GetEnvironmentVariable(prop.Key);
+                var env = Environment.GetEnvironmentVariable(key);
                 if (env != null)
                 {
-                    properties[prop.Key] = env;
+                    properties[key] = env;
                 }
             }
 
